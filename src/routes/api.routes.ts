@@ -50,5 +50,6 @@ const dashboardController = new DashboardController();
 
 // Dashboard Routes
 router.post("/dashboard/generate", authenticate, (req, res) => dashboardController.generate(req, res));
+router.post("/dashboard/generate-weekly", authenticate, (req, res) => dashboardController.generateWeeklyPlan(req, res));
 
 export default router;

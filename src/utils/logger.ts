@@ -1,5 +1,6 @@
 import winston from 'winston';
 import config from '../config/config';
+import { getTraceId } from './context';
 
 const { combine, timestamp, printf, colorize, align, uncolorize, json } = winston.format;
 
@@ -9,14 +10,23 @@ const consoleFormat = combine(
   timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   align(),
   printf(({ level, message, timestamp, ...meta }) => {
+    const traceId = getTraceId();
+    const traceString = traceId ? ` [${traceId}]` : '';
     const metaString = Object.keys(meta).length ? `\n${JSON.stringify(meta, null, 4)}` : '';
-    return `${timestamp} [${level}]: ${message}${metaString}`;
+    return `${timestamp}${traceString} [${level}]: ${message}${metaString}`;
   })
 );
 
 // Define log format for files (JSON format for ELK)
 const fileFormat = combine(
   timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  winston.format((info) => {
+    const traceId = getTraceId();
+    if (traceId) {
+      info.traceId = traceId;
+    }
+    return info;
+  })(),
   json()
 );
 

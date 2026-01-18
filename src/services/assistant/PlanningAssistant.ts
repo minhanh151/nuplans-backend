@@ -13,6 +13,7 @@ import { AIService } from "@/services/ai/AIService";
 import { AISystemInstructions } from "@/services/ai/AISystemInstructions";
 import { UserContextBuilder } from "@/services/UserContextBuilder";
 import { AIResponseUtils } from "@/utils/aiResponseUtils";
+import { truncateString } from "@/utils/stringUtils";
 
 export class PlanningAssistant {
 
@@ -43,12 +44,12 @@ export class PlanningAssistant {
         const existingMilestones = await this.milestoneRepo.find({ where: { userId: user.id } });
         const existingProjects = await this.projectRepo.find({ where: { userId: user.id } });
 
-        let roadmapData = { milestones: existingMilestones, projects: existingProjects };
         const needsRoadmap = !existingMilestones.length;
+        let roadmapData = { milestones: existingMilestones, projects: existingProjects, isExisted: !needsRoadmap };
 
         if (needsRoadmap) {
             const aiService = AIService.getInstance();
-            const aiProvider = aiService.getProvider(AIProviderType.GEMINI);
+            const aiProvider = aiService.getProvider(AIProviderType.OPENAI);
 
             const roadmapPrompt = `
                 You are an expert Career Coach. Generate a comprehensive career roadmap for the following user:
@@ -72,10 +73,10 @@ export class PlanningAssistant {
                 const milestonesToSave = parsedData.milestones.map((m: any) => {
                     const milestone = new Milestone();
                     milestone.userId = user.id;
-                    milestone.name = m.name;
-                    milestone.category = m.category;
-                    milestone.priority = m.priority;
-                    milestone.estimatedTime = m.estimated_time;
+                    milestone.name = truncateString(m.name, 255);
+                    milestone.category = truncateString(m.category, 50);
+                    milestone.priority = truncateString(m.priority, 20);
+                    milestone.estimatedTime = truncateString(m.estimated_time, 50);
                     milestone.description = m.description;
                     milestone.verificationMethod = m.verification_method;
                     milestone.deadline = m.deadline ? new Date(m.deadline) : undefined;
@@ -89,11 +90,11 @@ export class PlanningAssistant {
                 const projectsToSave = parsedData.projects.map((p: any) => {
                     const project = new Project();
                     project.userId = user.id;
-                    project.name = p.name;
-                    project.category = p.category;
+                    project.name = truncateString(p.name, 255);
+                    project.category = truncateString(p.category, 50);
                     project.description = p.description;
-                    project.impact = p.impact;
-                    project.priority = p.priority;
+                    project.impact = truncateString(p.impact, 50);
+                    project.priority = truncateString(p.priority, 20);
                     project.status = "planning";
                     return project;
                 });
@@ -107,7 +108,7 @@ export class PlanningAssistant {
 
     public async generateWeeklyPlan(user: User, userContext: UserContext, weekNumber: number) {
         const aiService = AIService.getInstance();
-        const aiProvider = aiService.getProvider(AIProviderType.GEMINI);
+        const aiProvider = aiService.getProvider(AIProviderType.OPENAI);
         const activeProjects = await this.projectRepo.find({
             where: { userId: user.id, status: "active" },
             take: 3
@@ -141,22 +142,19 @@ export class PlanningAssistant {
         const weeklyPlan = new WeeklyPlan();
         weeklyPlan.userId = user.id;
         weeklyPlan.weekNumber = weekNumber;
-        weeklyPlan.dateRange = `Week ${weekNumber}`;
+        weeklyPlan.dateRange = truncateString(`Week ${weekNumber}`, 50);
         weeklyPlan.summary = planData.summary;
-        weeklyPlan.priorityTaskTitle = planData.priority_task_title;
+        weeklyPlan.priorityTaskTitle = truncateString(planData.priority_task_title, 255);
         weeklyPlan.priorityTaskDescription = planData.priority_task_description;
         weeklyPlan.impact = planData.impact;
-        weeklyPlan.estimatedTime = planData.estimated_time;
-        // if (planData.project_id) {
-        //     weeklyPlan.projectId = planData.project_id;
-        // }
+        weeklyPlan.estimatedTime = truncateString(planData.estimated_time, 50);
 
         return weeklyPlan;
     }
 
     public async generateDailyActions(userContext: UserContext, profile: Profile, weeklyPlan: WeeklyPlan) {
         const aiService = AIService.getInstance();
-        const aiProvider = aiService.getProvider(AIProviderType.GEMINI);
+        const aiProvider = aiService.getProvider(AIProviderType.OPENAI);
 
         const dailyPrompt = `
                     You are an expert Career Coach.
@@ -185,11 +183,11 @@ export class PlanningAssistant {
                 const action = new DailyAction();
                 action.profileId = profile.id;
                 action.weeklyPlanId = weeklyPlan.id;
-                action.title = a.title;
+                action.title = truncateString(a.title, 300);
                 action.description = a.description;
-                action.priority = a.priority;
-                action.category = a.category;
-                action.estimatedTime = a.estimated_time;
+                action.priority = truncateString(a.priority, 50);
+                action.category = truncateString(a.category, 50);
+                action.estimatedTime = truncateString(a.estimated_time, 50);
                 action.actionDate = new Date();
                 return action;
             });
@@ -200,7 +198,7 @@ export class PlanningAssistant {
 
     public async generateMilestoneTasks(userContext: UserContext, profile: Profile, milestone: Milestone) {
         const aiService = AIService.getInstance();
-        const aiProvider = aiService.getProvider(AIProviderType.GEMINI);
+        const aiProvider = aiService.getProvider(AIProviderType.OPENAI);
 
         const taskPrompt = `
                     You are an expert Career Coach.
@@ -208,7 +206,7 @@ export class PlanningAssistant {
                     - Career Path: ${userContext.careerPath}
     
                     Based on the milestone: ${JSON.stringify(milestone)}, generate specific tasks to complete it.
-                    OUTPUT: JSON with "milestone_tasks" array: { label, due_in_days }.
+                    OUTPUT: JSON with "milestone_tasks" array: { label, deadline }.
                 `;
 
         const aiRes = await aiProvider.generateContent({
@@ -230,8 +228,8 @@ export class PlanningAssistant {
                 const task = new MilestoneTask();
                 task.profileId = profile.id;
                 task.milestoneId = milestone.id;
-                task.label = t.label;
-                task.dueInDays = t.due_in_days;
+                task.label = truncateString(t.label, 255);
+                task.deadline = t.deadline ? new Date(t.deadline) : new Date();
                 return task;
             });
             milestoneTasks = await this.milestoneTaskRepo.save(tasksToSave);

@@ -1,56 +1,62 @@
 import { Request, Response, NextFunction } from 'express';
+import { randomUUID } from 'crypto';
 import logger from '../utils/logger';
+import { runWithContext } from '../utils/context';
 
 /**
  * Middleware to log API requests and responses
  */
 export const loggingMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    const start = Date.now();
-    const { method, url, body, query } = req;
+    const traceId = randomUUID();
 
-    // Mask sensitive information in body if necessary
-    const maskedBody = { ...body };
-    const sensitiveFields = ['password', 'token', 'refreshToken', 'secret'];
-    sensitiveFields.forEach(field => {
-        if (maskedBody[field]) {
-            maskedBody[field] = '********';
-        }
-    });
+    runWithContext({ traceId }, () => {
+        const start = Date.now();
+        const { method, url, body, query } = req;
 
-    // Log request
-    logger.info(`Incoming Request: ${method} ${url}`, {
-        query,
-        body: maskedBody,
-    });
-
-    // Capture the original send to log response body
-    const originalSend = res.send;
-    res.send = function (content) {
-        const duration = Date.now() - start;
-        const statusCode = res.statusCode;
-
-        // Try to parse content if it's a string, to log it as an object
-        let responseBody = content;
-        try {
-            if (typeof content === 'string') {
-                responseBody = JSON.parse(content);
+        // Mask sensitive information in body if necessary
+        const maskedBody = { ...body };
+        const sensitiveFields = ['password', 'token', 'refreshToken', 'secret'];
+        sensitiveFields.forEach(field => {
+            if (maskedBody[field]) {
+                maskedBody[field] = '********';
             }
-        } catch (e) {
-            // Not JSON, keep as is
-        }
-
-        // Log response
-        logger.info(`Outgoing Response: ${method} ${url} - ${statusCode} (${duration}ms)`, {
-            statusCode,
-            duration: `${duration}ms`,
-            // Be careful with large response bodies, could truncate here if needed
-            responseBody: typeof responseBody === 'object' ? responseBody : 'Non-JSON response'
         });
 
-        return originalSend.apply(res, arguments as any);
-    };
+        // Log request
+        logger.info(`Incoming Request: ${method} ${url}`, {
+            query,
+            body: maskedBody,
+        });
 
-    next();
+        // Capture the original send to log response body
+        const originalSend = res.send;
+        res.send = function (content) {
+            const duration = Date.now() - start;
+            const statusCode = res.statusCode;
+
+            // Try to parse content if it's a string, to log it as an object
+            let responseBody = content;
+            try {
+                if (typeof content === 'string') {
+                    responseBody = JSON.parse(content);
+                }
+            } catch (e) {
+                // Not JSON, keep as is
+            }
+
+            // Log response
+            logger.info(`Outgoing Response: ${method} ${url} - ${statusCode} (${duration}ms)`, {
+                statusCode,
+                duration: `${duration}ms`,
+                // Be careful with large response bodies, could truncate here if needed
+                responseBody: typeof responseBody === 'object' ? responseBody : 'Non-JSON response'
+            });
+
+            return originalSend.apply(res, arguments as any);
+        };
+
+        next();
+    });
 };
 
 export default loggingMiddleware;

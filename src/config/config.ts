@@ -55,6 +55,7 @@ export interface IConfig {
     GEMINI_MODEL: string;
     OPENAI_API_KEY: string;
     OPENAI_MODEL: string;
+    OPENAI_BASE_URL: string;
   };
 
   // Storage Config (Supabase)
@@ -111,7 +112,8 @@ const config: IConfig = {
     GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
     GEMINI_MODEL: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
     OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
-    OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4-turbo'
+    OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4-turbo',
+    OPENAI_BASE_URL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1'
   },
 
   STORAGE: {

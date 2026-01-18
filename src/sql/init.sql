@@ -332,3 +332,56 @@ alter table chat_threads
     add group_object_id bigint;
 
 comment on column chat_threads.group_object_id is 'Id milestones/project/weekly_plan';
+
+CREATE OR REPLACE FUNCTION trigger_set_timestamp_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+create table daily_actions (
+    id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    profile_id uuid not null,
+    weekly_plan_id bigint not null,
+    title varchar(300) not null,
+    description varchar(500),
+    priority varchar(50),
+    category varchar(50),
+    estimated_time varchar(50),
+    action_date timestamptz,
+    completed boolean default false,
+    created_at timestamptz default now(),
+    updated_at timestamptz default now()
+);
+create index if not exists idx_daily_actions_profile_id on daily_actions(profile_id);
+create index if not exists idx_daily_actions_weekly_plan_id on daily_actions(weekly_plan_id);
+
+CREATE TRIGGER set_timestamp_updated_at_daily_actions
+    BEFORE UPDATE ON daily_actions
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_set_timestamp_updated_at();
+
+create table milestone_tasks (
+    id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    profile_id uuid not null,
+    milestone_id bigint not null,
+    label varchar(300) not null,
+    created_at timestamptz default now(),
+    updated_at timestamptz default now()
+);
+create index if not exists idx_milestone_tasks_profile_id on milestone_tasks(profile_id);
+create index if not exists idx_milestone_tasks_milestone_id on milestone_tasks(milestone_id);
+
+CREATE TRIGGER set_timestamp_updated_at_milestone_tasks
+    BEFORE UPDATE ON milestone_tasks
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_set_timestamp_updated_at();
+
+
+alter table weekly_plans
+    alter column impact type text using impact::text;
+

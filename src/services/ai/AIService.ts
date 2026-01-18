@@ -18,7 +18,8 @@ export class AIService {
         if (config.AI.OPENAI_API_KEY) {
             this.providers.set(AIProviderType.OPENAI, new OpenAIProvider(
                 config.AI.OPENAI_API_KEY,
-                config.AI.OPENAI_MODEL
+                config.AI.OPENAI_MODEL,
+                config.AI.OPENAI_BASE_URL
             ));
         }
     }

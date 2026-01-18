@@ -23,16 +23,6 @@ export class ChatService {
     private milestoneRepo = AppDataSource.getRepository(Milestone);
     private projectRepo = AppDataSource.getRepository(Project);
 
-    public async createThread(user: User, title?: string, groupId?: number) {
-        const thread = new ChatThread();
-        thread.userId = user.id;
-        thread.title = title || "New chat";
-        thread.groupId = groupId;
-        thread.status = "active";
-
-        return await this.threadRepo.save(thread);
-    }
-
     public async getThreads(user: User) {
         const listThreads = await this.threadRepo.find({
             where: { userId: user.id },

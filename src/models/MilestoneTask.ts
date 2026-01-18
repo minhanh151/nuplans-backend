@@ -24,8 +24,8 @@ export class MilestoneTask {
     @Column({ length: 255 })
     label!: string;
 
-    @Column({ name: "due_in_days", type: "int" })
-    dueInDays!: number;
+    @Column({ name: "deadline", type: "timestamp with time zone" })
+    deadline!: Date;
 
     @CreateDateColumn({ type: "timestamp with time zone", name: "created_at" })
     createdAt!: Date;
