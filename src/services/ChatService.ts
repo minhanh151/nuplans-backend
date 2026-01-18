@@ -98,7 +98,8 @@ export class ChatService {
                     };
                 });
             }
-            const archivedThreads = threads.filter(t => t.status === "archived");
+            const archivedThreads = threadDetails.filter(t => t.status === "archived");
+            threadDetails = threadDetails.filter(t => t.status !== "archived");
             listArchivedThreads = [...listArchivedThreads, ...archivedThreads];
             groups.push({
                 id: gid,
