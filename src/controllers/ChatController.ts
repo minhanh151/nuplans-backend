@@ -11,17 +11,6 @@ export class ChatController extends BaseController {
         this.chatService = new ChatService();
     }
 
-    public async createThread(req: Request, res: Response): Promise<void> {
-        try {
-            const { title, group_id } = req.body;
-            const user = (req as any).user;
-
-            const thread = await this.chatService.createThread(user, title, group_id);
-            this.handleSuccess(res, { thread });
-        } catch (error: any) {
-            this.handleError(res, error, "Failed to create thread");
-        }
-    }
 
     public async getThreads(req: Request, res: Response): Promise<void> {
         try {
@@ -68,6 +57,38 @@ export class ChatController extends BaseController {
                 this.handleBadRequest(res, error.message);
             } else {
                 this.handleError(res, error, "Failed to fetch chat history");
+            }
+        }
+    }
+
+    public async archiveThread(req: Request, res: Response): Promise<void> {
+        try {
+            const { threadId } = req.body;
+            const user = (req as any).user;
+
+            const result = await this.chatService.archiveThread(user, threadId);
+            this.handleSuccess(res, result);
+        } catch (error: any) {
+            if (error.message === "Thread not found") {
+                this.handleBadRequest(res, error.message);
+            } else {
+                this.handleError(res, error, "Failed to archive thread");
+            }
+        }
+    }
+
+    public async unarchiveThread(req: Request, res: Response): Promise<void> {
+        try {
+            const { threadId } = req.body;
+            const user = (req as any).user;
+
+            const result = await this.chatService.unarchiveThread(user, threadId);
+            this.handleSuccess(res, result);
+        } catch (error: any) {
+            if (error.message === "Thread not found") {
+                this.handleBadRequest(res, error.message);
+            } else {
+                this.handleError(res, error, "Failed to unarchive thread");
             }
         }
     }

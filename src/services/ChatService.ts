@@ -7,7 +7,7 @@ import { AIProviderType } from "./ai/AIProvider";
 import { User } from "../models/User";
 import { UserContext } from "../interfaces/UserContext";
 import { Constant } from "@/constants/Constant";
-import { In } from "typeorm";
+import { In, Not } from "typeorm";
 import { WeeklyPlan } from "@/models/WeeklyPlan";
 import { Milestone } from "@/models/Milestone";
 import { Project } from "@/models/Project";
@@ -33,6 +33,8 @@ export class ChatService {
         const groups: any[] = [];
         const groupedThreads: Record<number, any[]> = {};
 
+        let listArchivedThreads: any[] = [];
+
         for (const thread of listThreads) {
             const gid = thread.groupId || 0;
             if (!groupedThreads[gid]) groupedThreads[gid] = [];
@@ -44,7 +46,6 @@ export class ChatService {
             const listGroupObjectId = threads.map(t => t.groupObjectId);
             if (Constant.GROUP_TYPE.WEEKLY_PLAN === parseInt(gid)) {
                 const listWeeklyPlan = await this.weeklyPlanRepo.find({ where: { id: In(listGroupObjectId) } });
-                logger.info("listWeeklyPlan:", { listWeeklyPlan });
                 threadDetails = threads.map(t => {
                     const weeklyPlan = listWeeklyPlan.find(w => +w.id === +t.groupObjectId);
                     return {
@@ -97,12 +98,19 @@ export class ChatService {
                     };
                 });
             }
+            const archivedThreads = threads.filter(t => t.status === "archived");
+            listArchivedThreads = [...listArchivedThreads, ...archivedThreads];
             groups.push({
                 id: gid,
                 label: threads[0].group?.label || "General",
                 threads: threadDetails
             });
         }
+        groups.push({
+            id: '0',
+            label: "Archived",
+            threads: listArchivedThreads
+        });
 
         return groups;
     }
@@ -211,5 +219,25 @@ export class ChatService {
             page,
             limit
         };
+    }
+
+    public async archiveThread(user: User, threadId: string) {
+        const thread = await this.threadRepo.findOne({ where: { id: threadId, userId: user.id } });
+        if (!thread) {
+            throw new Error("Thread not found");
+        }
+
+        thread.status = "archived";
+        await this.threadRepo.save(thread);
+    }
+
+    public async unarchiveThread(user: User, threadId: string) {
+        const thread = await this.threadRepo.findOne({ where: { id: threadId, userId: user.id } });
+        if (!thread) {
+            throw new Error("Thread not found");
+        }
+
+        thread.status = "active";
+        await this.threadRepo.save(thread);
     }
 }

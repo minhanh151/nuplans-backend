@@ -30,10 +30,11 @@ router.get("/credit/latest", authenticate, (req, res) => creditController.getLat
 router.post("/credit/calculate", authenticate, (req, res) => creditController.calculateCredit(req, res));
 
 // Chat Routes
-router.post("/chat/thread", authenticate, (req, res) => chatController.createThread(req, res));
 router.get("/chat/threads", authenticate, (req, res) => chatController.getThreads(req, res));
 router.get("/chat/history/:threadId", authenticate, (req, res) => chatController.getChatHistory(req, res));
 router.post("/chat/message", authenticate, (req, res) => chatController.sendMessage(req, res));
+router.post("/chat/archive", authenticate, (req, res) => chatController.archiveThread(req, res));
+router.post("/chat/unarchive", authenticate, (req, res) => chatController.unarchiveThread(req, res));
 
 // Onboarding Routes
 router.get("/onboarding/profile", authenticate, (req, res) => onboardingController.getProfile(req, res));
