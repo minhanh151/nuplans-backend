@@ -26,9 +26,9 @@ export class User {
   @Column({ nullable: true })
   resetPasswordExpires?: Date;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'createdAt' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updatedAt' })
   updatedAt!: Date;
 }

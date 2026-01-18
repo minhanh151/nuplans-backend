@@ -4,6 +4,7 @@ import { StatusCodes } from 'http-status-codes';
 interface IApiResponse<T> {
   success: boolean;
   message: string;
+  code?: string;
   data?: T;
   error?: any;
 }
@@ -19,10 +20,11 @@ export const sendSuccess = <T>(
 ): void => {
   const response: IApiResponse<T> = {
     success: true,
+    code: 'SUCCESS',
     message,
     data
   };
-  
+
   res.status(statusCode).json(response);
 };
 
@@ -32,15 +34,17 @@ export const sendSuccess = <T>(
 export const sendError = (
   res: Response,
   message: string = 'An error occurred',
+  code: string = 'INTERNAL_SERVER_ERROR',
   statusCode: number = StatusCodes.INTERNAL_SERVER_ERROR,
   error?: any
 ): void => {
   const response: IApiResponse<null> = {
     success: false,
     message,
+    code,
     error: process.env.NODE_ENV === 'development' ? error : undefined
   };
-  
+
   res.status(statusCode).json(response);
 };
 
@@ -52,7 +56,7 @@ export const sendValidationError = (
   message: string = 'Validation failed',
   errors: any
 ): void => {
-  sendError(res, message, StatusCodes.UNPROCESSABLE_ENTITY, errors);
+  sendError(res, message, 'VALIDATION_ERROR', StatusCodes.UNPROCESSABLE_ENTITY, errors);
 };
 
 /**
@@ -62,7 +66,7 @@ export const sendNotFound = (
   res: Response,
   message: string = 'Resource not found'
 ): void => {
-  sendError(res, message, StatusCodes.NOT_FOUND);
+  sendError(res, message, 'NOT_FOUND', StatusCodes.NOT_FOUND);
 };
 
 /**
@@ -72,7 +76,7 @@ export const sendUnauthorized = (
   res: Response,
   message: string = 'Unauthorized'
 ): void => {
-  sendError(res, message, StatusCodes.UNAUTHORIZED);
+  sendError(res, message, 'UNAUTHORIZED', StatusCodes.UNAUTHORIZED);
 };
 
 /**
@@ -82,5 +86,5 @@ export const sendForbidden = (
   res: Response,
   message: string = 'Forbidden'
 ): void => {
-  sendError(res, message, StatusCodes.FORBIDDEN);
+  sendError(res, message, 'FORBIDDEN', StatusCodes.FORBIDDEN);
 };

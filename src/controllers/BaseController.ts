@@ -12,11 +12,11 @@ export class BaseController {
 
   protected handleError(res: Response, error: Error, message: string = 'An error occurred'): void {
     logger.error(`${this.constructor.name} error:`, error);
-    sendError(res, message, StatusCodes.INTERNAL_SERVER_ERROR, error);
+    sendError(res, message, 'INTERNAL_SERVER_ERROR', StatusCodes.INTERNAL_SERVER_ERROR, error);
   }
 
-  protected handleNotFound(res: Response, message: string = 'Resource not found'): void {
-    sendError(res, message, StatusCodes.NOT_FOUND);
+  protected handleBadRequest(res: Response, message: string = 'Resource not found', code: string = 'BAD_REQUEST'): void {
+    sendError(res, message, code, StatusCodes.BAD_REQUEST);
   }
 
   protected handleSuccess<T>(res: Response, data: T, message: string = 'Success'): void {

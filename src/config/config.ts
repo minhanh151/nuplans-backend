@@ -25,6 +25,8 @@ export interface IConfig {
   JWT: {
     SECRET: string;
     EXPIRES_IN: string;
+    REFRESH_SECRET: string;
+    REFRESH_EXPIRES_IN: string;
   };
 
   // CORS configuration
@@ -46,6 +48,21 @@ export interface IConfig {
 
   // App Config
   APP_URL: string;
+
+  // AI Config
+  AI: {
+    GEMINI_API_KEY: string;
+    GEMINI_MODEL: string;
+    OPENAI_API_KEY: string;
+    OPENAI_MODEL: string;
+  };
+
+  // Storage Config (Supabase)
+  STORAGE: {
+    SUPABASE_URL: string;
+    SUPABASE_KEY: string;
+    CV_BUCKET: string;
+  };
 }
 
 // Parse environment variables and create configuration object
@@ -65,7 +82,9 @@ const config: IConfig = {
 
   JWT: {
     SECRET: process.env.JWT_SECRET || 'your_jwt_secret_key_here',
-    EXPIRES_IN: process.env.JWT_EXPIRES_IN || '24h'
+    EXPIRES_IN: process.env.JWT_EXPIRES_IN || '24h',
+    REFRESH_SECRET: process.env.REFRESH_SECRET || 'your_refresh_token_secret_here',
+    REFRESH_EXPIRES_IN: process.env.REFRESH_EXPIRES_IN || '7d'
   },
 
   CORS: {
@@ -73,7 +92,7 @@ const config: IConfig = {
       (process.env.CORS_ORIGIN.includes(',') ?
         process.env.CORS_ORIGIN.split(',').map(origin => origin.trim()) :
         process.env.CORS_ORIGIN) :
-      '*'
+      ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:8081']
   },
 
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
@@ -86,7 +105,20 @@ const config: IConfig = {
     FROM: process.env.SMTP_FROM || '"Nuplans Support" <no-reply@nuplans.com>'
   },
 
-  APP_URL: process.env.APP_URL || 'http://localhost:3000'
+  APP_URL: process.env.APP_URL || 'http://localhost:3000',
+
+  AI: {
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+    GEMINI_MODEL: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
+    OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4-turbo'
+  },
+
+  STORAGE: {
+    SUPABASE_URL: process.env.SUPABASE_URL || '',
+    SUPABASE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || '',
+    CV_BUCKET: process.env.CV_BUCKET || 'cvs'
+  }
 };
 
 export default config;

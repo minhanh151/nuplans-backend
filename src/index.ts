@@ -7,9 +7,11 @@ import { DataSource } from 'typeorm';
 import AppDataSource from './data-source';
 import config from './config/config';
 import logger from './utils/logger';
+import loggingMiddleware from './middlewares/loggingMiddleware';
 import { sendError } from './utils/apiResponse';
 import { StatusCodes } from 'http-status-codes';
 import authRoutes from './routes/auth.routes';
+import apiRoutes from './routes/api.routes';
 
 class App {
   public app: Application;
@@ -21,6 +23,7 @@ class App {
     this.port = config.PORT;
     this.initializeDatabase()
       .then(() => {
+        this.initializeBeforeMiddlewares();
         this.initializeMiddlewares();
         this.initializeRoutes();
         this.initializeErrorHandling();
@@ -32,6 +35,15 @@ class App {
   }
 
 
+  private initializeBeforeMiddlewares(): void {
+    // Parse JSON and URL-encoded bodies first so we can log them
+    this.app.use(express.json());
+    this.app.use(express.urlencoded({ extended: true }));
+
+    // Request logging (detailed)
+    this.app.use(loggingMiddleware);
+  }
+
   private initializeMiddlewares(): void {
     // Security middleware
     this.app.use(helmet());
@@ -41,15 +53,8 @@ class App {
       origin: config.CORS.ORIGIN,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization']
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
     }));
-
-    // Request logging
-    this.app.use(morgan('dev'));
-
-    // Parse JSON and URL-encoded bodies
-    this.app.use(express.json());
-    this.app.use(express.urlencoded({ extended: true }));
   }
 
   private initializeRoutes(): void {
@@ -65,10 +70,11 @@ class App {
     // API routes will be mounted here
     // API routes will be mounted here
     this.app.use('/api/auth', authRoutes);
+    this.app.use('/api', apiRoutes);
 
     // Handle 404
     this.app.use((req: Request, res: Response) => {
-      sendError(res, 'Not Found', StatusCodes.NOT_FOUND);
+      sendError(res, 'Not Found', 'NOT_FOUND', StatusCodes.NOT_FOUND);
     });
   }
 

@@ -4,14 +4,11 @@ export abstract class BaseEntity extends TypeORMBaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @CreateDateColumn({ type: 'timestamp with time zone', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamp with time zone', default: () => 'CURRENT_TIMESTAMP' })
   createdAt!: Date;
 
-  @UpdateDateColumn({ type: 'timestamp with time zone', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamp with time zone', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
   updatedAt!: Date;
-
-  @DeleteDateColumn({ type: 'timestamp with time zone', nullable: true })
-  deletedAt!: Date | null;
 
   static get entityName(): string {
     return this.name;

@@ -29,8 +29,27 @@ export class AuthController {
 
     static async login(req: Request, res: Response) {
         try {
-            const { user, token } = await authService.login(req.body);
-            res.status(StatusCodes.OK).json({ message: 'Login successful', user, token });
+            const { user, accessToken, refreshToken } = await authService.login(req.body);
+            res.status(StatusCodes.OK).json({
+                message: 'Login successful',
+                user,
+                accessToken,
+                refreshToken
+            });
+        } catch (error: any) {
+            console.error(error);
+            res.status(StatusCodes.UNAUTHORIZED).json({ message: error.message });
+        }
+    }
+
+    static async refreshToken(req: Request, res: Response) {
+        try {
+            const { refreshToken } = req.body;
+            if (!refreshToken) {
+                return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Refresh token is required' });
+            }
+            const { accessToken } = await authService.refreshAccessToken(refreshToken);
+            res.status(StatusCodes.OK).json({ accessToken });
         } catch (error: any) {
             res.status(StatusCodes.UNAUTHORIZED).json({ message: error.message });
         }
@@ -52,6 +71,18 @@ export class AuthController {
             const { token, newPassword } = req.body;
             await authService.resetPassword(token, newPassword);
             res.status(StatusCodes.OK).json({ message: 'Password reset successfully' });
+        } catch (error: any) {
+            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+        }
+    }
+
+    static async logout(req: Request, res: Response) {
+        try {
+            const { refreshToken } = req.body;
+            if (refreshToken) {
+                await authService.logout(refreshToken);
+            }
+            res.status(StatusCodes.OK).json({ message: 'Logged out successfully' });
         } catch (error: any) {
             res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
         }
