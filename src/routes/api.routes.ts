@@ -6,6 +6,8 @@ import { ChatController } from "../controllers/ChatController";
 import { OnboardingController } from "../controllers/OnboardingController";
 import { IdentityController } from "../controllers/IdentityController";
 import { StorageController } from "../controllers/StorageController";
+import { DailyActionController } from "../controllers/DailyActionController";
+import { MilestoneController } from "../controllers/MilestoneController";
 import multer from "multer";
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -19,6 +21,8 @@ const chatController = new ChatController();
 const onboardingController = new OnboardingController();
 const identityController = new IdentityController();
 const storageController = new StorageController();
+const dailyActionController = new DailyActionController();
+const milestoneController = new MilestoneController();
 
 // CV Routes
 router.post("/cv/upload", authenticate, upload.single("file"), (req, res) => storageController.uploadCV(req, res));
@@ -42,6 +46,15 @@ router.post("/onboarding/save", authenticate, (req, res) => onboardingController
 
 // Identity Routes
 router.post("/id/verify", authenticate, (req, res) => identityController.verifyIdentity(req, res));
+
+// Daily Actions Routes
+router.get("/daily-actions", authenticate, (req, res) => dailyActionController.getDailyActions(req, res));
+router.patch("/daily-actions/:id/complete", authenticate, (req, res) => dailyActionController.completeDailyAction(req, res));
+router.patch("/daily-actions/:id/uncomplete", authenticate, (req, res) => dailyActionController.uncompleteDailyAction(req, res));
+
+// Milestone Routes
+router.get("/milestones", authenticate, (req, res) => milestoneController.getMilestones(req, res));
+router.get("/milestones/:id", authenticate, (req, res) => milestoneController.getMilestoneDetail(req, res));
 
 import { DashboardController } from "../controllers/DashboardController";
 

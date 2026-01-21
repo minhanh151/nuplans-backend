@@ -4,4 +4,6 @@ export class Constant {
         MILESTONE: 2,
         PROJECT: 3,
     };
+
+    public static readonly MAX_RETRY_COUNT = 3;
 }

@@ -365,19 +365,31 @@ CREATE TRIGGER set_timestamp_updated_at_daily_actions
     FOR EACH ROW
     EXECUTE FUNCTION trigger_set_timestamp_updated_at();
 
-create table milestone_tasks (
-    id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    profile_id uuid not null,
-    milestone_id bigint not null,
-    label varchar(300) not null,
-    created_at timestamptz default now(),
-    updated_at timestamptz default now()
+create table public.milestone_steps
+(
+    id           bigint generated always as identity constraint milestone_tasks_pkey primary key,
+    profile_id   uuid                                   not null,
+    milestone_id bigint                                 not null,
+    label        varchar(300)                           not null,
+    description  text,
+    step_number  smallint,
+    is_completed boolean                  default false not null,
+    created_at   timestamp with time zone default now(),
+    updated_at   timestamp with time zone default now(),
 );
-create index if not exists idx_milestone_tasks_profile_id on milestone_tasks(profile_id);
-create index if not exists idx_milestone_tasks_milestone_id on milestone_tasks(milestone_id);
 
-CREATE TRIGGER set_timestamp_updated_at_milestone_tasks
-    BEFORE UPDATE ON milestone_tasks
+alter table public.milestone_steps
+    owner to postgres;
+
+create index idx_milestone_steps_profile_id
+    on public.milestone_steps (profile_id);
+
+create index idx_milestone_steps_milestone_id
+    on public.milestone_steps (milestone_id);
+
+
+CREATE TRIGGER set_timestamp_updated_at_milestone_steps
+    BEFORE UPDATE ON milestone_steps
     FOR EACH ROW
     EXECUTE FUNCTION trigger_set_timestamp_updated_at();
 
@@ -385,3 +397,45 @@ CREATE TRIGGER set_timestamp_updated_at_milestone_tasks
 alter table weekly_plans
     alter column impact type text using impact::text;
 
+
+
+
+
+create table stored_events (
+    id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    event_type varchar(50) not null,
+    event_data jsonb not null,
+    retry_count int default 0,
+    status smallint default 0,
+    created_at timestamptz default now(),
+    updated_at timestamptz default now()
+);
+create index if not exists idx_stored_events_event_type on stored_events(event_type, status, retry_count);
+
+-- Add project_id to milestones table to establish projects > milestones relationship
+ALTER TABLE public.milestones
+ADD COLUMN IF NOT EXISTS project_id bigint REFERENCES projects(id) ON DELETE CASCADE;
+
+CREATE INDEX IF NOT EXISTS idx_milestones_project_id ON milestones(project_id);
+
+-- Add milestone_id to weekly_plans table to establish milestones > weekly_plans relationship
+ALTER TABLE public.weekly_plans
+ADD COLUMN IF NOT EXISTS milestone_id bigint REFERENCES milestones(id) ON DELETE CASCADE;
+
+CREATE INDEX IF NOT EXISTS idx_weekly_plans_milestone_id ON weekly_plans(milestone_id);
+
+-- Rename profile_id to user_id in daily_actions table
+ALTER TABLE public.daily_actions 
+RENAME COLUMN profile_id TO user_id;
+
+-- Drop old index and create new one with correct column name
+DROP INDEX IF EXISTS idx_daily_actions_profile_id;
+CREATE INDEX IF NOT EXISTS idx_daily_actions_user_id ON daily_actions(user_id);
+
+-- Rename profile_id to user_id in milestone_steps table
+ALTER TABLE public.milestone_steps 
+RENAME COLUMN profile_id TO user_id;
+
+-- Drop old index and create new one with correct column name
+DROP INDEX IF EXISTS idx_milestone_steps_profile_id;
+CREATE INDEX IF NOT EXISTS idx_milestone_steps_user_id ON milestone_steps(user_id);

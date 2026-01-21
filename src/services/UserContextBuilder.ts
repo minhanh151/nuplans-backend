@@ -72,7 +72,7 @@ export class UserContextBuilder {
 
         // Applied Jobs (simplistic check for now)
         const hasApplied = await this.dailyActionRepo.count({
-            where: { profileId: profile.id, category: 'Job Application', completed: true }
+            where: { userId: user.id, category: 'Job Application', completed: true }
         });
 
         return {

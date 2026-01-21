@@ -2,7 +2,7 @@ import AppDataSource from "@/data-source";
 import { UserContext } from "@/interfaces/UserContext";
 import { DailyAction } from "@/models/DailyAction";
 import { Milestone } from "@/models/Milestone";
-import { MilestoneTask } from "@/models/MilestoneTask";
+import { MilestoneStep } from "@/models/MilestoneStep";
 import { Profile } from "@/models/Profile";
 import { Project } from "@/models/Project";
 import { SkillProfile } from "@/models/SkillProfile";
@@ -11,9 +11,13 @@ import { WeeklyPlan } from "@/models/WeeklyPlan";
 import { AIProviderType } from "@/services/ai/AIProvider";
 import { AIService } from "@/services/ai/AIService";
 import { AISystemInstructions } from "@/services/ai/AISystemInstructions";
-import { UserContextBuilder } from "@/services/UserContextBuilder";
 import { AIResponseUtils } from "@/utils/aiResponseUtils";
 import { truncateString } from "@/utils/stringUtils";
+import { GenerateMilestoneService } from "../GenerateMilestoneService";
+import { ChatThreadHandler } from "../handlers/ChatThreadHandler";
+import { Not } from "typeorm";
+import { GenerateMilestoneStepService } from "../GenerateMilestoneStepService";
+import { GenerateDailyActionService } from "../GenerateDailyActionService";
 
 export class PlanningAssistant {
 
@@ -23,7 +27,7 @@ export class PlanningAssistant {
     private projectRepo = AppDataSource.getRepository(Project);
     private weeklyPlanRepo = AppDataSource.getRepository(WeeklyPlan);
     private dailyActionRepo = AppDataSource.getRepository(DailyAction);
-    private milestoneTaskRepo = AppDataSource.getRepository(MilestoneTask);
+    private MilestoneStepRepo = AppDataSource.getRepository(MilestoneStep);
 
     private static PlanningAssistantInstance: PlanningAssistant;
 
@@ -34,60 +38,40 @@ export class PlanningAssistant {
         return PlanningAssistant.PlanningAssistantInstance;
     }
 
-    public async initMileStonesAndProjects(user: User, profile: Profile) {
+    public async generateProjects(user: User, profile: Profile) {
         const skillProfile = await this.skillProfileRepo.findOne({ where: { profileId: profile.id } });
 
-        // Build User Context
-        const userContext = await UserContextBuilder.getInstance().build(user);
-
         // 1. Check for Roadmap (Milestones/Projects)
-        const existingMilestones = await this.milestoneRepo.find({ where: { userId: user.id } });
         const existingProjects = await this.projectRepo.find({ where: { userId: user.id } });
 
-        const needsRoadmap = !existingMilestones.length;
-        let roadmapData = { milestones: existingMilestones, projects: existingProjects, isExisted: !needsRoadmap };
+        const needsRoadmap = !existingProjects.length;
+        let roadmapData = { projects: existingProjects, isExisted: !needsRoadmap };
 
         if (needsRoadmap) {
             const aiService = AIService.getInstance();
             const aiProvider = aiService.getProvider(AIProviderType.OPENAI);
 
-            const roadmapPrompt = `
-                You are an expert Career Coach. Generate a comprehensive career roadmap for the following user:
+            // Step 1: Generate Projects first
+            const projectPrompt = `
+                You are an expert Career Coach. Generate a comprehensive career roadmap for the following user.
                 PROFILE: ${JSON.stringify(profile)}
                 SKILLS: ${JSON.stringify(skillProfile)}
 
-                OUTPUT: A JSON object with "milestones" and "projects".
-                - "milestones" array: items with "name", "category", "priority" (mandatory/optional), "estimated_time", "description", "verification_method" (upload/api/auto/review), "deadline" (ISO date string within next 6 months).
-                - "projects" array: items with "name", "description", "category", "impact", "priority".
+                OUTPUT: A JSON object with "projects" array.
+                - "projects" array: items with "name", "description", "category", "impact", "priority" (high/medium/low).
+                Generate 2-4 strategic projects that align with the user's career goals.
                 All strings should be concise.
             `;
 
-            const aiRes = await aiProvider.generateContent({
+            const projectRes = await aiProvider.generateContent({
                 systemInstruction: AISystemInstructions.JSON_ONLY,
-                content: roadmapPrompt
+                content: projectPrompt
             });
 
-            const parsedData = AIResponseUtils.responseToJSON(aiRes.content);
+            const projectData = AIResponseUtils.responseToJSON(projectRes.content);
 
-            if (parsedData.milestones) {
-                const milestonesToSave = parsedData.milestones.map((m: any) => {
-                    const milestone = new Milestone();
-                    milestone.userId = user.id;
-                    milestone.name = truncateString(m.name, 255);
-                    milestone.category = truncateString(m.category, 50);
-                    milestone.priority = truncateString(m.priority, 20);
-                    milestone.estimatedTime = truncateString(m.estimated_time, 50);
-                    milestone.description = m.description;
-                    milestone.verificationMethod = m.verification_method;
-                    milestone.deadline = m.deadline ? new Date(m.deadline) : undefined;
-                    milestone.status = "pending";
-                    return milestone;
-                });
-                roadmapData.milestones = await this.milestoneRepo.save(milestonesToSave);
-            }
-
-            if (parsedData.projects) {
-                const projectsToSave = parsedData.projects.map((p: any) => {
+            if (projectData.projects) {
+                const projectsToSave = projectData.projects.map((p: any) => {
                     const project = new Project();
                     project.userId = user.id;
                     project.name = truncateString(p.name, 255);
@@ -98,39 +82,95 @@ export class PlanningAssistant {
                     project.status = "planning";
                     return project;
                 });
-                roadmapData.projects = await this.projectRepo.save(projectsToSave);
+                for (const project of projectsToSave) {
+                    await this.projectRepo.save(project);
+                    await ChatThreadHandler.getInstance().createProjectThread(user, project);
+                    await GenerateMilestoneService.getInstance().createEvent({
+                        userId: user.id,
+                        projectId: project.id,
+                    });
+                }
             }
         }
 
         return roadmapData;
     }
 
-
-    public async generateWeeklyPlan(user: User, userContext: UserContext, weekNumber: number) {
+    public async generateMilestones(user: User, profile: Profile, project: Project) {
         const aiService = AIService.getInstance();
         const aiProvider = aiService.getProvider(AIProviderType.OPENAI);
-        const activeProjects = await this.projectRepo.find({
-            where: { userId: user.id, status: "active" },
-            take: 3
+        const listMilestone = [];
+
+        const milestonePrompt = `
+            You are an expert Career Coach. Generate specific milestones for the following project:
+            PROJECT: ${JSON.stringify(project)}
+            USER PROFILE: ${JSON.stringify(profile)}
+
+            OUTPUT: A JSON object with "milestones" array.
+            - "milestones" array: items with "name", "category", "priority" (mandatory/optional), "estimated_time", "description", "verification_method" (upload/api/auto/review), "deadline" (ISO date string within next 6 months).
+            Generate 2-5 milestones that will help complete this project.
+            All strings should be concise.
+        `;
+
+        const milestoneRes = await aiProvider.generateContent({
+            systemInstruction: AISystemInstructions.JSON_ONLY,
+            content: milestonePrompt
         });
 
-        const pendingMilestones = await this.milestoneRepo.find({
-            where: { userId: user.id, status: "pending" },
+        const milestoneData = AIResponseUtils.responseToJSON(milestoneRes.content);
+
+        if (milestoneData.milestones) {
+            const milestonesToSave = milestoneData.milestones.map((m: any) => {
+                const milestone = new Milestone();
+                milestone.userId = user.id;
+                milestone.projectId = project.id; // Link to parent project
+                milestone.name = truncateString(m.name, 255);
+                milestone.category = truncateString(m.category, 50);
+                milestone.priority = truncateString(m.priority, 20);
+                milestone.estimatedTime = truncateString(m.estimated_time, 50);
+                milestone.description = m.description;
+                milestone.verificationMethod = m.verification_method;
+                milestone.deadline = m.deadline ? new Date(m.deadline) : undefined;
+                milestone.status = "pending";
+                return milestone;
+            });
+            const savedMilestones = await this.milestoneRepo.save(milestonesToSave);
+            for (const milestone of savedMilestones) {
+                await ChatThreadHandler.getInstance().createMilestoneThread(user, milestone);
+                await GenerateMilestoneStepService.getInstance().createEvent({
+                    userId: user.id,
+                    projectId: project.id,
+                });
+            }
+            listMilestone.push(...savedMilestones);
+        }
+        return listMilestone;
+    }
+
+    public async generateWeeklyPlan(user: User, userContext: UserContext, weekNumber: number, milestone: Milestone) {
+        const aiService = AIService.getInstance();
+        const aiProvider = aiService.getProvider(AIProviderType.OPENAI);
+
+
+        const inprogressMilestones = await this.milestoneRepo.find({
+            where: { userId: user.id, status: Not("pending") },
             take: 3
         });
+        const inprogressMilestonesStr = inprogressMilestones.map((m: any) => m.name).join(", ");
 
         const weeklyPrompt = `
-                    You are an expert Career Coach.
-                    USER CONTEXT:
-                    - Career Path: ${userContext.careerPath}
-                    - Current Month: ${userContext.currentMonth}
-                    - Milestones Completed: ${userContext.milestonesCompleted} / ${userContext.totalMilestones}
-                    - Skills Proficiency: ${userContext.skillsProficiency}%
-                    - Days Active: ${userContext.daysActive}
-    
-                    Based on the user's active projects: ${JSON.stringify(activeProjects)} and pending milestones: ${JSON.stringify(pendingMilestones)}, generate a weekly plan for week ${weekNumber}.
-                    OUTPUT: JSON with "summary", "priority_task_title", "priority_task_description", "impact", "estimated_time".
-                `;
+            You are an expert Career Coach.
+            USER CONTEXT:
+            - Career Path: ${userContext.careerPath}
+            - Current Month: ${userContext.currentMonth}
+            - Milestones Completed: ${userContext.milestonesCompleted} / ${userContext.totalMilestones}
+            - Skills Proficiency: ${userContext.skillsProficiency}%
+            - Days Active: ${userContext.daysActive}
+
+            ${milestone ? `MILESTONE FOCUS: ${JSON.stringify(milestone)}` : ''}
+            Based on the user's inprogress milestones: ${inprogressMilestonesStr}, generate a weekly plan for next week (week ${weekNumber}).
+            OUTPUT: JSON with "summary", "priority_task_title", "priority_task_description", "impact", "estimated_time".
+        `;
 
         const aiRes = await aiProvider.generateContent({
             systemInstruction: AISystemInstructions.JSON_ONLY,
@@ -141,6 +181,7 @@ export class PlanningAssistant {
 
         const weeklyPlan = new WeeklyPlan();
         weeklyPlan.userId = user.id;
+        weeklyPlan.milestoneId = milestone.id; // Link to parent milestone
         weeklyPlan.weekNumber = weekNumber;
         weeklyPlan.dateRange = truncateString(`Week ${weekNumber}`, 50);
         weeklyPlan.summary = planData.summary;
@@ -149,6 +190,13 @@ export class PlanningAssistant {
         weeklyPlan.impact = planData.impact;
         weeklyPlan.estimatedTime = truncateString(planData.estimated_time, 50);
 
+        const savedWeeklyPlan = await this.weeklyPlanRepo.save(weeklyPlan);
+        await ChatThreadHandler.getInstance().createWeeklyPlanThread(user, weeklyPlan);
+        await GenerateDailyActionService.getInstance().createEvent({
+            userId: user.id,
+            weeklyPlanId: savedWeeklyPlan.id,
+        });
+
         return weeklyPlan;
     }
 
@@ -156,17 +204,33 @@ export class PlanningAssistant {
         const aiService = AIService.getInstance();
         const aiProvider = aiService.getProvider(AIProviderType.OPENAI);
 
+        // Get user from weeklyPlan or profile
+        const userId = weeklyPlan.userId || profile.userId;
+
+        const listCompletedActions = await this.dailyActionRepo.find({
+            where: {
+                userId: userId,
+                completed: true
+            },
+            select: {
+                title: true,
+            },
+            take: 10
+        });
+        const listCompletedActionsStr = listCompletedActions.map((a: any) => a.title).join(", ");
+
         const dailyPrompt = `
-                    You are an expert Career Coach.
-                    USER CONTEXT:
-                    - Career Path: ${userContext.careerPath}
-                    - Current Month: ${userContext.currentMonth}
-                    - Last Activity: ${userContext.lastActivityDays} days ago
-                    - Applied to Jobs: ${userContext.hasAppliedToJobs}
-    
-                    Based on the user's weekly plan: ${JSON.stringify(weeklyPlan)}, generate daily actions for the current day to help achieve the plan.
-                    OUTPUT: JSON with "daily_actions" array: { title, description, priority, category, estimated_time }.
-                `;
+            You are an expert Career Coach.
+            USER CONTEXT:
+            - Career Path: ${userContext.careerPath}
+            - Current Month: ${userContext.currentMonth}
+            - Last Activity: ${userContext.lastActivityDays} days ago
+            - Applied to Jobs: ${userContext.hasAppliedToJobs}
+            - List actions completed: ${listCompletedActionsStr}
+
+            Based on the user's weekly plan: ${JSON.stringify(weeklyPlan)}, generate 3 daily actions for the current day to help achieve the plan.
+            OUTPUT: JSON with "daily_actions" array: { title, description, priority, category, estimated_time }.
+        `;
 
         const aiRes = await aiProvider.generateContent({
             systemInstruction: AISystemInstructions.JSON_ONLY,
@@ -177,18 +241,17 @@ export class PlanningAssistant {
         let dailyActions: DailyAction[] = [];
 
         if (data.daily_actions) {
-            await this.dailyActionRepo.delete({ profileId: profile.id, actionDate: new Date() });
+            await this.dailyActionRepo.delete({ userId: userId, actionDate: new Date() });
 
             const actionsToSave = data.daily_actions.map((a: any) => {
                 const action = new DailyAction();
-                action.profileId = profile.id;
+                action.userId = userId;
                 action.weeklyPlanId = weeklyPlan.id;
                 action.title = truncateString(a.title, 300);
                 action.description = a.description;
                 action.priority = truncateString(a.priority, 50);
                 action.category = truncateString(a.category, 50);
                 action.estimatedTime = truncateString(a.estimated_time, 50);
-                action.actionDate = new Date();
                 return action;
             });
             dailyActions = await this.dailyActionRepo.save(actionsToSave);
@@ -196,18 +259,21 @@ export class PlanningAssistant {
         return dailyActions;
     }
 
-    public async generateMilestoneTasks(userContext: UserContext, profile: Profile, milestone: Milestone) {
+    public async generateMilestoneSteps(userContext: UserContext, profile: Profile, milestone: Milestone) {
         const aiService = AIService.getInstance();
         const aiProvider = aiService.getProvider(AIProviderType.OPENAI);
 
+        // Get user from milestone or profile
+        const userId = milestone.userId || profile.userId;
+
         const taskPrompt = `
-                    You are an expert Career Coach.
-                    USER CONTEXT:
-                    - Career Path: ${userContext.careerPath}
-    
-                    Based on the milestone: ${JSON.stringify(milestone)}, generate specific tasks to complete it.
-                    OUTPUT: JSON with "milestone_tasks" array: { label, deadline }.
-                `;
+            You are an expert Career Coach.
+            USER CONTEXT:
+            - Career Path: ${userContext.careerPath}
+
+            Based on the milestone: ${JSON.stringify(milestone)}, generate specific tasks step to complete it.
+            OUTPUT: JSON with "milestone_steps" array and order by step_number: { label, description }.
+        `;
 
         const aiRes = await aiProvider.generateContent({
             systemInstruction: AISystemInstructions.JSON_ONLY,
@@ -215,25 +281,28 @@ export class PlanningAssistant {
         });
 
         const data = AIResponseUtils.responseToJSON(aiRes.content);
-        let milestoneTasks: MilestoneTask[] = [];
+        let milestoneSteps: MilestoneStep[] = [];
 
         if (data.milestone_tasks) {
             // Check if tasks already exist for this milestone to avoid duplication logic if needed, 
             // but for now we follow the pattern of refreshing or appending. 
             // The previous logic deleted ALL milestone tasks for profile, which might be aggressive if splitting by milestone.
             // Let's delete only tasks for this milestone if we are regenerating for it.
-            await this.milestoneTaskRepo.delete({ profileId: profile.id, milestoneId: milestone.id });
+            await this.MilestoneStepRepo.delete({ userId: userId, milestoneId: milestone.id });
 
+            let stepNumber = 1;
             const tasksToSave = data.milestone_tasks.map((t: any) => {
-                const task = new MilestoneTask();
-                task.profileId = profile.id;
+                const task = new MilestoneStep();
+                task.userId = userId;
                 task.milestoneId = milestone.id;
                 task.label = truncateString(t.label, 255);
-                task.deadline = t.deadline ? new Date(t.deadline) : new Date();
+                task.description = t.description;
+                task.stepNumber = stepNumber;
+                stepNumber++;
                 return task;
             });
-            milestoneTasks = await this.milestoneTaskRepo.save(tasksToSave);
+            milestoneSteps = await this.MilestoneStepRepo.save(tasksToSave);
         }
-        return milestoneTasks;
+        return milestoneSteps;
     }
 }

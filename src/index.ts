@@ -8,7 +8,7 @@ import AppDataSource from './data-source';
 import config from './config/config';
 import logger from './utils/logger';
 import loggingMiddleware from './middlewares/loggingMiddleware';
-import { CronService } from './services/CronService';
+import { CronJobRunner } from './crons/CronJobRunner';
 import { sendError } from './utils/apiResponse';
 import { StatusCodes } from 'http-status-codes';
 import authRoutes from './routes/auth.routes';
@@ -28,7 +28,7 @@ class App {
         this.initializeMiddlewares();
         this.initializeRoutes();
         this.initializeErrorHandling();
-        CronService.getInstance().init();
+        CronJobRunner.getInstance().init();
       })
       .catch((error) => {
         console.error('Failed to initialize database:', error);

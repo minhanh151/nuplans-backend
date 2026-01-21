@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from "typeorm";
-import { Project } from "./Project";
+import { Milestone } from "./Milestone";
 import { User } from "./User";
 
 @Entity("weekly_plans")
@@ -14,12 +14,12 @@ export class WeeklyPlan {
     @JoinColumn({ name: "user_id" })
     user?: User;
 
-    // @Column({ name: "project_id", nullable: true, type: "bigint" })
-    // projectId?: string;
+    @Column({ name: "milestone_id", type: "bigint", nullable: true })
+    milestoneId?: string;
 
-    // @ManyToOne(() => Project)
-    // @JoinColumn({ name: "project_id" })
-    // project?: Project;
+    @ManyToOne(() => Milestone)
+    @JoinColumn({ name: "milestone_id" })
+    milestone?: Milestone;
 
     @Column({ name: "week_number", type: "smallint" })
     weekNumber!: number;

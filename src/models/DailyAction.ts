@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from "typeorm";
-import { Profile } from "./Profile";
+import { User } from "./User";
 import { WeeklyPlan } from "./WeeklyPlan";
 
 @Entity("daily_actions")
@@ -7,12 +7,12 @@ export class DailyAction {
     @PrimaryGeneratedColumn({ type: "bigint" })
     id!: string;
 
-    @Column({ name: "profile_id", type: "uuid" })
-    profileId!: string;
+    @Column({ name: "user_id", type: "uuid" })
+    userId!: string;
 
-    @ManyToOne(() => Profile)
-    @JoinColumn({ name: "profile_id" })
-    profile!: Profile;
+    @ManyToOne(() => User)
+    @JoinColumn({ name: "user_id" })
+    user!: User;
 
     @Column({ name: "weekly_plan_id", type: "bigint", nullable: true })
     weeklyPlanId?: string;

@@ -1,18 +1,18 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from "typeorm";
 import { Milestone } from "./Milestone";
-import { Profile } from "./Profile";
+import { User } from "./User";
 
-@Entity("milestone_tasks")
-export class MilestoneTask {
+@Entity("milestone_steps")
+export class MilestoneStep {
     @PrimaryGeneratedColumn({ type: "bigint" })
     id!: string;
 
-    @Column({ name: "profile_id", type: "uuid" })
-    profileId!: string;
+    @Column({ name: "user_id", type: "uuid" })
+    userId!: string;
 
-    @ManyToOne(() => Profile)
-    @JoinColumn({ name: "profile_id" })
-    profile!: Profile;
+    @ManyToOne(() => User)
+    @JoinColumn({ name: "user_id" })
+    user!: User;
 
     @Column({ name: "milestone_id", type: "bigint", nullable: true })
     milestoneId?: string;
@@ -21,8 +21,17 @@ export class MilestoneTask {
     @JoinColumn({ name: "milestone_id" })
     milestone?: Milestone;
 
-    @Column({ length: 255 })
+    @Column({ length: 300 })
     label!: string;
+
+    @Column({ type: "text" })
+    description!: string;
+
+    @Column({ type: "smallint", name: "step_number" })
+    stepNumber!: number;
+
+    @Column({ type: "boolean", name: "is_completed" })
+    isCompleted!: boolean;
 
     @Column({ name: "deadline", type: "timestamp with time zone" })
     deadline!: Date;

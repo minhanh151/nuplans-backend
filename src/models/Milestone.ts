@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from "typeorm";
 import { User } from "./User";
+import { Project } from "./Project";
 
 @Entity("milestones")
 export class Milestone {
@@ -12,6 +13,13 @@ export class Milestone {
     @ManyToOne(() => User)
     @JoinColumn({ name: "user_id" })
     user!: User;
+
+    @Column({ name: "project_id", type: "bigint", nullable: true })
+    projectId?: string;
+
+    @ManyToOne(() => Project)
+    @JoinColumn({ name: "project_id" })
+    project?: Project;
 
     @Column({ length: 255 })
     name!: string;
@@ -35,7 +43,7 @@ export class Milestone {
     deadline?: Date;
 
     @Column({ type: "boolean", default: false, name: "evidence_submitted" })
-    evidenceSubmitted?: boolean;
+    evidenceSubmitted!: boolean;
 
     @Column({ name: "progress", type: "integer", default: 0 })
     progress?: number;
@@ -48,4 +56,7 @@ export class Milestone {
 
     @UpdateDateColumn({ type: "timestamp with time zone", name: "updated_at" })
     updatedAt!: Date;
+
+    @Column({ type: "text", nullable: true })
+    evidence?: string;
 }
