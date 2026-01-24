@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { AIProviderType, AIRequest, AIResponse, IAIProvider } from "./AIProvider";
+import logger from "@/utils/logger";
 
 export class OpenAIProvider implements IAIProvider {
     private client: OpenAI;
@@ -29,6 +30,7 @@ export class OpenAIProvider implements IAIProvider {
 
         const choice = response.choices[0];
         const text = choice.message.content || "";
+        logger.info(`OpenAIProvider response: ${text}`);
 
         return {
             content: text,

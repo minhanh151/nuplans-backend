@@ -57,6 +57,7 @@ export class GenerateMilestoneService implements EventHandler {
                 throw new Error("Project not found");
             }
             await PlanningAssistant.getInstance().generateMilestones(user, profile, project);
+            event.status = EventStatus.COMPLETED;
         } catch (e: any) {
             logger.error("Error when processing event generate milestones", e);
             if (event.retryCount >= Constant.MAX_RETRY_COUNT) {
@@ -65,7 +66,6 @@ export class GenerateMilestoneService implements EventHandler {
                 event.status = EventStatus.PENDING;
             }
         }
-        event.status = EventStatus.COMPLETED;
         this.storeEventRepo.save(event);
     }
 

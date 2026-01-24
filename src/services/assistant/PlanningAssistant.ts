@@ -15,9 +15,10 @@ import { AIResponseUtils } from "@/utils/aiResponseUtils";
 import { truncateString } from "@/utils/stringUtils";
 import { GenerateMilestoneService } from "../GenerateMilestoneService";
 import { ChatThreadHandler } from "../handlers/ChatThreadHandler";
-import { Not } from "typeorm";
+import { LessThan, MoreThan, Not } from "typeorm";
 import { GenerateMilestoneStepService } from "../GenerateMilestoneStepService";
 import { GenerateDailyActionService } from "../GenerateDailyActionService";
+import logger from "@/utils/logger";
 
 export class PlanningAssistant {
 
@@ -27,7 +28,7 @@ export class PlanningAssistant {
     private projectRepo = AppDataSource.getRepository(Project);
     private weeklyPlanRepo = AppDataSource.getRepository(WeeklyPlan);
     private dailyActionRepo = AppDataSource.getRepository(DailyAction);
-    private MilestoneStepRepo = AppDataSource.getRepository(MilestoneStep);
+    private milestoneStepRepo = AppDataSource.getRepository(MilestoneStep);
 
     private static PlanningAssistantInstance: PlanningAssistant;
 
@@ -96,7 +97,7 @@ export class PlanningAssistant {
         return roadmapData;
     }
 
-    public async generateMilestones(user: User, profile: Profile, project: Project) {
+    public async generateMilestones(user: User, profile: Profile, project: Project): Promise<Milestone[]> {
         const aiService = AIService.getInstance();
         const aiProvider = aiService.getProvider(AIProviderType.OPENAI);
         const listMilestone = [];
@@ -107,8 +108,8 @@ export class PlanningAssistant {
             USER PROFILE: ${JSON.stringify(profile)}
 
             OUTPUT: A JSON object with "milestones" array.
-            - "milestones" array: items with "name", "category", "priority" (mandatory/optional), "estimated_time", "description", "verification_method" (upload/api/auto/review), "deadline" (ISO date string within next 6 months).
-            Generate 2-5 milestones that will help complete this project.
+            - "milestones" array: items with "name", "category", "priority" (mandatory/optional), "estimated_time", "description", "start_date" (ISO date string, when to start), "deadline" (ISO date string within next 6 months).
+            Generate 2-3 milestones that will help complete this project.
             All strings should be concise.
         `;
 
@@ -130,7 +131,8 @@ export class PlanningAssistant {
                 milestone.estimatedTime = truncateString(m.estimated_time, 50);
                 milestone.description = m.description;
                 milestone.verificationMethod = m.verification_method;
-                milestone.deadline = m.deadline ? new Date(m.deadline) : undefined;
+                milestone.startDate = m.start_date ? new Date(m.start_date) : new Date();
+                milestone.deadline = m.deadline ? new Date(m.deadline) : new Date(new Date().getDate() + 14);
                 milestone.status = "pending";
                 return milestone;
             });
@@ -139,7 +141,7 @@ export class PlanningAssistant {
                 await ChatThreadHandler.getInstance().createMilestoneThread(user, milestone);
                 await GenerateMilestoneStepService.getInstance().createEvent({
                     userId: user.id,
-                    projectId: project.id,
+                    milestoneId: milestone.id,
                 });
             }
             listMilestone.push(...savedMilestones);
@@ -147,16 +149,18 @@ export class PlanningAssistant {
         return listMilestone;
     }
 
-    public async generateWeeklyPlan(user: User, userContext: UserContext, weekNumber: number, milestone: Milestone) {
+    public async generateWeeklyPlan(user: User, userContext: UserContext, weekNumber: number) {
         const aiService = AIService.getInstance();
         const aiProvider = aiService.getProvider(AIProviderType.OPENAI);
 
 
-        const inprogressMilestones = await this.milestoneRepo.find({
-            where: { userId: user.id, status: Not("pending") },
-            take: 3
+        const focusedMilestones = await this.milestoneRepo.find({
+            where: {
+                userId: user.id, status: "not-started",
+                startDate: LessThan(new Date()),
+                deadline: MoreThan(new Date())
+            },
         });
-        const inprogressMilestonesStr = inprogressMilestones.map((m: any) => m.name).join(", ");
 
         const weeklyPrompt = `
             You are an expert Career Coach.
@@ -167,9 +171,8 @@ export class PlanningAssistant {
             - Skills Proficiency: ${userContext.skillsProficiency}%
             - Days Active: ${userContext.daysActive}
 
-            ${milestone ? `MILESTONE FOCUS: ${JSON.stringify(milestone)}` : ''}
-            Based on the user's inprogress milestones: ${inprogressMilestonesStr}, generate a weekly plan for next week (week ${weekNumber}).
-            OUTPUT: JSON with "summary", "priority_task_title", "priority_task_description", "impact", "estimated_time".
+            Based on the user's focus on milestones: ${focusedMilestones}, generate a weekly plan for next week (week ${weekNumber}).
+            OUTPUT: JSON with "summary", "priority_task_title", "priority_task_description", "impact", "estimated_time", "start_date" (ISO date string for week start), "deadline" (ISO date string for week end).
         `;
 
         const aiRes = await aiProvider.generateContent({
@@ -178,10 +181,10 @@ export class PlanningAssistant {
         });
 
         const planData = AIResponseUtils.responseToJSON(aiRes.content);
+        const today = new Date();
 
         const weeklyPlan = new WeeklyPlan();
         weeklyPlan.userId = user.id;
-        weeklyPlan.milestoneId = milestone.id; // Link to parent milestone
         weeklyPlan.weekNumber = weekNumber;
         weeklyPlan.dateRange = truncateString(`Week ${weekNumber}`, 50);
         weeklyPlan.summary = planData.summary;
@@ -189,6 +192,8 @@ export class PlanningAssistant {
         weeklyPlan.priorityTaskDescription = planData.priority_task_description;
         weeklyPlan.impact = planData.impact;
         weeklyPlan.estimatedTime = truncateString(planData.estimated_time, 50);
+        weeklyPlan.startDate = planData.start_date ? new Date(planData.start_date) : today;
+        weeklyPlan.deadline = planData.deadline ? new Date(planData.deadline) : new Date(today.getDate() + 7);
 
         const savedWeeklyPlan = await this.weeklyPlanRepo.save(weeklyPlan);
         await ChatThreadHandler.getInstance().createWeeklyPlanThread(user, weeklyPlan);
@@ -283,15 +288,15 @@ export class PlanningAssistant {
         const data = AIResponseUtils.responseToJSON(aiRes.content);
         let milestoneSteps: MilestoneStep[] = [];
 
-        if (data.milestone_tasks) {
+        if (data.milestone_steps) {
             // Check if tasks already exist for this milestone to avoid duplication logic if needed, 
             // but for now we follow the pattern of refreshing or appending. 
             // The previous logic deleted ALL milestone tasks for profile, which might be aggressive if splitting by milestone.
             // Let's delete only tasks for this milestone if we are regenerating for it.
-            await this.MilestoneStepRepo.delete({ userId: userId, milestoneId: milestone.id });
+            await this.milestoneStepRepo.delete({ userId: userId, milestoneId: milestone.id });
 
             let stepNumber = 1;
-            const tasksToSave = data.milestone_tasks.map((t: any) => {
+            const tasksToSave = data.milestone_steps.map((t: any) => {
                 const task = new MilestoneStep();
                 task.userId = userId;
                 task.milestoneId = milestone.id;
@@ -301,7 +306,7 @@ export class PlanningAssistant {
                 stepNumber++;
                 return task;
             });
-            milestoneSteps = await this.MilestoneStepRepo.save(tasksToSave);
+            milestoneSteps = await this.milestoneStepRepo.save(tasksToSave);
         }
         return milestoneSteps;
     }

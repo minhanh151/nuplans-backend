@@ -14,12 +14,6 @@ export class WeeklyPlan {
     @JoinColumn({ name: "user_id" })
     user?: User;
 
-    @Column({ name: "milestone_id", type: "bigint", nullable: true })
-    milestoneId?: string;
-
-    @ManyToOne(() => Milestone)
-    @JoinColumn({ name: "milestone_id" })
-    milestone?: Milestone;
 
     @Column({ name: "week_number", type: "smallint" })
     weekNumber!: number;
@@ -41,6 +35,12 @@ export class WeeklyPlan {
 
     @Column({ name: "estimated_time", length: 50, nullable: true })
     estimatedTime?: string;
+
+    @Column({ name: "start_date", type: "timestamp with time zone", nullable: true })
+    startDate!: Date;
+
+    @Column({ name: "deadline", type: "timestamp with time zone", nullable: true })
+    deadline!: Date;
 
     @CreateDateColumn({ type: "timestamp with time zone", name: "created_at" })
     createdAt!: Date;

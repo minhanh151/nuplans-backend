@@ -439,3 +439,13 @@ RENAME COLUMN profile_id TO user_id;
 -- Drop old index and create new one with correct column name
 DROP INDEX IF EXISTS idx_milestone_steps_profile_id;
 CREATE INDEX IF NOT EXISTS idx_milestone_steps_user_id ON milestone_steps(user_id);
+
+-- Add start_date to milestones table
+ALTER TABLE public.milestones
+ADD COLUMN IF NOT EXISTS start_date TIMESTAMPTZ
+ADD COLUMN IF NOT EXISTS evidence varchar(255);
+
+-- Add start_date and deadline to weekly_plans table
+ALTER TABLE public.weekly_plans
+ADD COLUMN IF NOT EXISTS start_date TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS deadline TIMESTAMPTZ;

@@ -2,28 +2,6 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDa
 import { ChatThread } from "./ChatThread";
 import { User } from "./User";
 
-@Entity("weekly_planning_threads")
-export class WeeklyPlanningThread {
-    @PrimaryGeneratedColumn({ type: "bigint" })
-    id!: string;
-
-    @Column({ name: "thread_id" })
-    threadId!: string;
-
-    @ManyToOne(() => ChatThread)
-    @JoinColumn({ name: "thread_id" })
-    thread!: ChatThread;
-
-    @Column({ name: "week_number", type: "smallint" })
-    weekNumber!: number;
-
-    @Column({ name: "date_range", length: 50 })
-    dateRange!: string;
-
-    @Column({ name: "weekly_plan_id", type: "bigint", nullable: true })
-    weeklyPlanId?: string;
-}
-
 @Entity("milestones")
 export class Milestone {
     @PrimaryGeneratedColumn({ type: "bigint" })
@@ -58,25 +36,6 @@ export class Milestone {
     updatedAt!: Date;
 }
 
-@Entity("milestone_threads")
-export class MilestoneThread {
-    @PrimaryGeneratedColumn({ type: "bigint" })
-    id!: string;
-
-    @Column({ name: "thread_id" })
-    threadId!: string;
-
-    @ManyToOne(() => ChatThread)
-    @JoinColumn({ name: "thread_id" })
-    thread!: ChatThread;
-
-    @Column({ name: "milestone_id" })
-    milestoneId!: string;
-
-    @ManyToOne(() => Milestone)
-    @JoinColumn({ name: "milestone_id" })
-    milestone!: Milestone;
-}
 
 @Entity("projects")
 export class Project {
@@ -115,25 +74,6 @@ export class Project {
     updatedAt!: Date;
 }
 
-@Entity("project_threads")
-export class ProjectThread {
-    @PrimaryGeneratedColumn({ type: "bigint" })
-    id!: string;
-
-    @Column({ name: "thread_id" })
-    threadId!: string;
-
-    @ManyToOne(() => ChatThread)
-    @JoinColumn({ name: "thread_id" })
-    thread!: ChatThread;
-
-    @Column({ name: "project_id" })
-    projectId!: string;
-
-    @ManyToOne(() => Project)
-    @JoinColumn({ name: "project_id" })
-    project!: Project;
-}
 
 @Entity("thread_badges")
 export class ThreadBadge {

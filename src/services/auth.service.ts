@@ -31,7 +31,13 @@ export class AuthService {
         await this.userRepository.save(newUser);
         await this.emailService.sendVerificationEmail(newUser.email, verificationToken);
 
-        return newUser;
+        const clone = new User();
+        clone.email = newUser.email;
+        clone.name = newUser.name;
+        clone.isVerified = newUser.isVerified;
+        clone.id = newUser.id;
+
+        return clone;
     }
 
     async verifyEmail(token: string) {

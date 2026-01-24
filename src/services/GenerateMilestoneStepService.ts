@@ -28,7 +28,7 @@ export class GenerateMilestoneStepService implements EventHandler {
         return GenerateMilestoneStepService.generateMilestoneStepService;
     }
 
-    public createEvent(data: GenMilestoneEventData) {
+    public createEvent(data: GenMilestoneStepEventData) {
         const event = new StoredEvent();
         event.eventType = EventType.GEN_MILESTONE_STEP;
         event.eventData = data;
@@ -56,6 +56,7 @@ export class GenerateMilestoneStepService implements EventHandler {
             const userContext = await UserContextBuilder.getInstance().build(user);
 
             await PlanningAssistant.getInstance().generateMilestoneSteps(userContext, profile, milestone);
+            event.status = EventStatus.COMPLETED;
         } catch (e: any) {
             logger.error("Error when processing event generate milestone's steps", e);
             if (event.retryCount >= Constant.MAX_RETRY_COUNT) {
@@ -64,7 +65,6 @@ export class GenerateMilestoneStepService implements EventHandler {
                 event.status = EventStatus.PENDING;
             }
         }
-        event.status = EventStatus.COMPLETED;
         this.storeEventRepo.save(event);
     }
 

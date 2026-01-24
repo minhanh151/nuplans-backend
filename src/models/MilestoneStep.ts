@@ -33,9 +33,6 @@ export class MilestoneStep {
     @Column({ type: "boolean", name: "is_completed" })
     isCompleted!: boolean;
 
-    @Column({ name: "deadline", type: "timestamp with time zone" })
-    deadline!: Date;
-
     @CreateDateColumn({ type: "timestamp with time zone", name: "created_at" })
     createdAt!: Date;
 }

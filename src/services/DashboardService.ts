@@ -1,25 +1,22 @@
 import AppDataSource from "@/data-source";
 import { Profile } from "@/models/Profile";
-import { Milestone } from "@/models/Milestone";
+import { Project } from "@/models/Project";
 import { User } from "@/models/User";
-import { PlanningAssistant } from "@/services/assistant/PlanningAssistant";
-import { ChatThreadHandler } from "./handlers/ChatThreadHandler";
-import { WeeklyPlanningGenerator } from "./WeeklyPlanningGenerator";
-import { UserContextBuilder } from "./UserContextBuilder";
-import logger from "@/utils/logger";
-import { WeeklyPlan } from "@/models/WeeklyPlan";
+import { GenerateAllPlanService } from "./GenerateAllPlanService";
 
 export class DashboardService {
     private profileRepo = AppDataSource.getRepository(Profile);
-    private milestoneRepo = AppDataSource.getRepository(Milestone);
-    private weeklyPlanRepo = AppDataSource.getRepository(WeeklyPlan);
+    private projectRepo = AppDataSource.getRepository(Project);
 
     public async generateDashboardData(user: User) {
         const profile = await this.profileRepo.findOne({ where: { userId: user.id } });
         if (!profile) {
             throw new Error("Profile not found");
         }
-        const { projects } = await PlanningAssistant.getInstance()
-            .generateProjects(user, profile);
+        const project = await this.projectRepo.findOne({ where: { userId: user.id } });
+        if (project) {
+            return;
+        }
+        await GenerateAllPlanService.getInstance().createEvent({ userId: user.id });
     }
 }

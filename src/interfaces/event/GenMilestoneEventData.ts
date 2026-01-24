@@ -1,4 +1,4 @@
 export interface GenMilestoneEventData {
     userId: string;
-    projectId: string;
+    projectId: number;
 }

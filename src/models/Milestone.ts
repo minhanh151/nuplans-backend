@@ -15,7 +15,7 @@ export class Milestone {
     user!: User;
 
     @Column({ name: "project_id", type: "bigint", nullable: true })
-    projectId?: string;
+    projectId?: number;
 
     @ManyToOne(() => Project)
     @JoinColumn({ name: "project_id" })
@@ -39,8 +39,11 @@ export class Milestone {
     @Column({ name: "verification_method", length: 50, nullable: true })
     verificationMethod?: string;
 
-    @Column({ type: "timestamp with time zone", nullable: true })
-    deadline?: Date;
+    @Column({ name: "start_date", type: "timestamp with time zone" })
+    startDate!: Date;
+
+    @Column({ type: "timestamp with time zone" })
+    deadline!: Date;
 
     @Column({ type: "boolean", default: false, name: "evidence_submitted" })
     evidenceSubmitted!: boolean;

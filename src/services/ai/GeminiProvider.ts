@@ -34,7 +34,7 @@ export class GeminiProvider implements IAIProvider {
         const response = await result.response;
 
         const text = response.text();
-        logger.info(text);
+        logger.info(`GeminiProvider response: ${text}`);
 
         return {
             content: text,
