@@ -15,7 +15,7 @@ export class IdentityController extends BaseController {
             const { photoIdPath, selfiePath } = req.body;
             const user = (req as any).user;
 
-            const result = await this.identityService.verifyIdentity(user, photoIdPath, selfiePath);
+            const result = await this.identityService.prepareVerifyIdentity(user, photoIdPath, selfiePath);
             this.handleSuccess(res, { success: true, result });
         } catch (error: any) {
             this.handleError(res, error, "Failed to verify identity");

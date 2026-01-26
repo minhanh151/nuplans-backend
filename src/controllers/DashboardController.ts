@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { BaseController } from "./BaseController";
 import { DashboardService } from "../services/DashboardService";
-import { WeeklyPlanningService } from "@/services/WeeklyPlanningGenerator";
+import { WeeklyPlanningGenerator } from "@/services/WeeklyPlanningGenerator";
 
 export class DashboardController extends BaseController {
     private dashboardService: DashboardService;
@@ -23,7 +23,7 @@ export class DashboardController extends BaseController {
 
     public async generateWeeklyPlan(req: Request, res: Response): Promise<void> {
         try {
-            await WeeklyPlanningService.getInstance().runWeeklyGeneration();
+            await WeeklyPlanningGenerator.getInstance().runWeeklyGeneration();
             this.handleSuccess(res, { message: "Weekly plan generation triggered" });
         } catch (error: any) {
             this.handleError(res, error, "Failed to trigger weekly plan generation");

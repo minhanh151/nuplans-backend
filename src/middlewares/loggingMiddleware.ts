@@ -13,6 +13,9 @@ export const loggingMiddleware = (req: Request, res: Response, next: NextFunctio
         const start = Date.now();
         const { method, url, body, query } = req;
 
+        // Add trace-id to response headers
+        res.setHeader('X-Trace-Id', traceId);
+
         // Mask sensitive information in body if necessary
         const maskedBody = { ...body };
         const sensitiveFields = ['password', 'token', 'refreshToken', 'secret'];

@@ -20,7 +20,7 @@ export class CVService {
         const truncatedText = text.length > maxTextLength ? text.substring(0, maxTextLength) + "\n\n[Content truncated...]" : text;
 
         const aiService = AIService.getInstance();
-        const aiProvider = aiService.getProvider(AIProviderType.GEMINI);
+        const aiProvider = aiService.getProvider(AIProviderType.PARSE_CV);
 
         const instruction = this.getParseCVInstruction();
         const aiRes = await aiProvider.generateContent({

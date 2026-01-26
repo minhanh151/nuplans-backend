@@ -1,7 +1,10 @@
 import { AIProviderType, IAIProvider } from "./AIProvider";
 import { GeminiProvider } from "./GeminiProvider";
+import { MilestoneActionAIProvider } from "./OpenAI/MilestoneActionAIProvider";
+import { ParseCvAIProvider } from "./OpenAI/ParseCvAIProvider";
+import { PlanningAIProvider } from "./OpenAI/PlanningAIProvider";
 import { OpenAIProvider } from "./OpenAIProvider";
-import config from "../../config/config";
+import config from "@/config/config";
 
 export class AIService {
     private static instance: AIService;
@@ -22,6 +25,9 @@ export class AIService {
                 config.AI.OPENAI_BASE_URL
             ));
         }
+        this.providers.set(AIProviderType.MILESTONE_ACTION_OPENAI, new MilestoneActionAIProvider());
+        this.providers.set(AIProviderType.PLANNING_OPENAI, new PlanningAIProvider());
+        this.providers.set(AIProviderType.PARSE_CV, new ParseCvAIProvider());
     }
 
     public static getInstance(): AIService {

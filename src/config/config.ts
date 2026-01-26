@@ -56,6 +56,15 @@ export interface IConfig {
     OPENAI_API_KEY: string;
     OPENAI_MODEL: string;
     OPENAI_BASE_URL: string;
+    MILESTONE_ACTION_OPENAI_API_KEY: string;
+    MILESTONE_ACTION_OPENAI_API_MODEL: string;
+    MILESTONE_ACTION_OPENAI_API_BASE_URL: string;
+    PLANNING_OPENAI_API_KEY: string;
+    PLANNING_OPENAI_API_MODEL: string;
+    PLANNING_OPENAI_API_BASE_URL: string;
+    PARSE_CV_API_KEY: string;
+    PARSE_CV_API_MODEL: string;
+    PARSE_CV_API_BASE_URL: string;
   };
 
   // Storage Config (Supabase)
@@ -113,7 +122,16 @@ const config: IConfig = {
     GEMINI_MODEL: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
     OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
     OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4-turbo',
-    OPENAI_BASE_URL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1'
+    OPENAI_BASE_URL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
+    MILESTONE_ACTION_OPENAI_API_KEY: process.env.MILESTONE_ACTION_OPENAI_API_KEY || '',
+    MILESTONE_ACTION_OPENAI_API_MODEL: process.env.MILESTONE_ACTION_OPENAI_API_MODEL || '',
+    MILESTONE_ACTION_OPENAI_API_BASE_URL: process.env.MILESTONE_ACTION_OPENAI_API_BASE_URL || '',
+    PLANNING_OPENAI_API_KEY: process.env.PLANNING_OPENAI_API_KEY || '',
+    PLANNING_OPENAI_API_MODEL: process.env.PLANNING_OPENAI_API_MODEL || '',
+    PLANNING_OPENAI_API_BASE_URL: process.env.PLANNING_OPENAI_API_BASE_URL || '',
+    PARSE_CV_API_KEY: process.env.PARSE_CV_API_KEY || '',
+    PARSE_CV_API_MODEL: process.env.PARSE_CV_API_MODEL || '',
+    PARSE_CV_API_BASE_URL: process.env.PARSE_CV_API_BASE_URL || ''
   },
 
   STORAGE: {

@@ -19,6 +19,7 @@ import { LessThan, MoreThan, Not } from "typeorm";
 import { GenerateMilestoneStepService } from "../GenerateMilestoneStepService";
 import { GenerateDailyActionService } from "../GenerateDailyActionService";
 import logger from "@/utils/logger";
+import { DailyActionCategory } from "@/interfaces/DailyActionCategory";
 
 export class PlanningAssistant {
 
@@ -50,7 +51,7 @@ export class PlanningAssistant {
 
         if (needsRoadmap) {
             const aiService = AIService.getInstance();
-            const aiProvider = aiService.getProvider(AIProviderType.OPENAI);
+            const aiProvider = aiService.getProvider(AIProviderType.PLANNING_OPENAI);
 
             // Step 1: Generate Projects first
             const projectPrompt = `
@@ -127,7 +128,7 @@ export class PlanningAssistant {
                 milestone.projectId = project.id; // Link to parent project
                 milestone.name = truncateString(m.name, 255);
                 milestone.category = truncateString(m.category, 50);
-                milestone.priority = truncateString(m.priority, 20);
+                milestone.priority = truncateString(m.priority, 20).toLowerCase();
                 milestone.estimatedTime = truncateString(m.estimated_time, 50);
                 milestone.description = m.description;
                 milestone.verificationMethod = m.verification_method;
@@ -207,7 +208,7 @@ export class PlanningAssistant {
 
     public async generateDailyActions(userContext: UserContext, profile: Profile, weeklyPlan: WeeklyPlan) {
         const aiService = AIService.getInstance();
-        const aiProvider = aiService.getProvider(AIProviderType.OPENAI);
+        const aiProvider = aiService.getProvider(AIProviderType.PLANNING_OPENAI);
 
         // Get user from weeklyPlan or profile
         const userId = weeklyPlan.userId || profile.userId;
@@ -223,6 +224,7 @@ export class PlanningAssistant {
             take: 10
         });
         const listCompletedActionsStr = listCompletedActions.map((a: any) => a.title).join(", ");
+        const validCategories = Object.values(DailyActionCategory).map((c: any) => c.toLowerCase());
 
         const dailyPrompt = `
             You are an expert Career Coach.
@@ -234,6 +236,7 @@ export class PlanningAssistant {
             - List actions completed: ${listCompletedActionsStr}
 
             Based on the user's weekly plan: ${JSON.stringify(weeklyPlan)}, generate 3 daily actions for the current day to help achieve the plan.
+            Valid categories: ${validCategories.join(", ")}
             OUTPUT: JSON with "daily_actions" array: { title, description, priority, category, estimated_time }.
         `;
 
@@ -266,7 +269,7 @@ export class PlanningAssistant {
 
     public async generateMilestoneSteps(userContext: UserContext, profile: Profile, milestone: Milestone) {
         const aiService = AIService.getInstance();
-        const aiProvider = aiService.getProvider(AIProviderType.OPENAI);
+        const aiProvider = aiService.getProvider(AIProviderType.MILESTONE_ACTION_OPENAI);
 
         // Get user from milestone or profile
         const userId = milestone.userId || profile.userId;
@@ -276,7 +279,7 @@ export class PlanningAssistant {
             USER CONTEXT:
             - Career Path: ${userContext.careerPath}
 
-            Based on the milestone: ${JSON.stringify(milestone)}, generate specific tasks step to complete it.
+            Based on the milestone: ${JSON.stringify(milestone)}, generate specific tasks step to complete it, number of steps should be less than 7.
             OUTPUT: JSON with "milestone_steps" array and order by step_number: { label, description }.
         `;
 

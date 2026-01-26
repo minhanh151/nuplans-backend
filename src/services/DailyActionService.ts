@@ -42,7 +42,7 @@ export class DailyActionService {
 
             // Execute query with ordering and limit
             const dailyActions = await query
-                .orderBy("da.createdAt", "DESC")
+                .orderBy("da.id")
                 .take(limit)
                 .select([
                     "da.id",

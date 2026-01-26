@@ -3,8 +3,8 @@ import { AIProviderType, AIRequest, AIResponse, IAIProvider } from "./AIProvider
 import logger from "@/utils/logger";
 
 export class OpenAIProvider implements IAIProvider {
-    private client: OpenAI;
-    private model: string;
+    protected client: OpenAI;
+    protected model: string;
 
     constructor(apiKey: string, model: string = "gpt-4-turbo", baseURL?: string) {
         this.client = new OpenAI({

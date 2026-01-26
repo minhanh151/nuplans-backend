@@ -13,6 +13,7 @@ import { GenerateMilestoneService } from "@/services/GenerateMilestoneService";
 import { GenerateMilestoneStepService } from "@/services/GenerateMilestoneStepService";
 import { GenerateWeeklyPlanService } from "@/services/GenerateWeeklyPlanService";
 import { GenerateAllPlanService } from "@/services/GenerateAllPlanService";
+import { IdentityService } from "@/services/IdentityService";
 
 export class CronJobRunner {
     private static instance: CronJobRunner;
@@ -110,10 +111,18 @@ export class CronJobRunner {
         });
 
         // Schedule daily actions generation
-        cron.schedule("12 0 * * *", async () => {
+        cron.schedule("10 22 * * *", async () => {
             const traceId = randomUUID();
             await runWithContext({ traceId }, async () => {
                 GenerateDailyActionService.getInstance().genDailyActions();
+            });
+        });
+
+        // Schedule identity verification
+        cron.schedule("*/15 * * * *", async () => {
+            const traceId = randomUUID();
+            await runWithContext({ traceId }, async () => {
+                IdentityService.getInstance().verifyIdentityProcess();
             });
         });
 

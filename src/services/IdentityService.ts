@@ -5,11 +5,24 @@ import { AIService } from "./ai/AIService";
 import { AIProviderType } from "./ai/AIProvider";
 import { User } from "../models/User";
 import logger from "@/utils/logger";
+import { EventType } from "@/interfaces/event/EventType";
+import { StoredEvent } from "@/models/StoredEvent";
+import { EventStatus } from "@/interfaces/event/EventStatus";
+import { LessThan } from "typeorm";
 
 export class IdentityService {
+    private static instance: IdentityService;
     private profileRepo = AppDataSource.getRepository(Profile);
+    private eventRepo = AppDataSource.getRepository(StoredEvent);
 
-    public async verifyIdentity(user: User, photoIdPath: string, selfiePath: string) {
+    public static getInstance(): IdentityService {
+        if (!IdentityService.instance) {
+            IdentityService.instance = new IdentityService();
+        }
+        return IdentityService.instance;
+    }
+
+    public async prepareVerifyIdentity(user: User, photoIdPath: string, selfiePath: string) {
         logger.info(user);
         let profile = await this.profileRepo.findOne({ where: { userId: user.id } });
 
@@ -24,10 +37,29 @@ export class IdentityService {
         profile.idvSubmittedAt = new Date();
         await this.profileRepo.save(profile);
 
+        const event = new StoredEvent();
+        event.eventType = EventType.VERIFY_IDENTITY;
+        event.eventData = {
+            userId: user.id,
+        }
+        await this.eventRepo.save(event);
+    }
+
+    public async verifyIdentity(userId: string) {
+        logger.info("Processing verify identity of user", userId);
+        let profile = await this.profileRepo.findOne({ where: { userId } });
+
+        if (!profile) {
+            throw new Error("Profile not found");
+        }
+        if (!profile.photoIdPath || !profile.selfiePath) {
+            throw new Error("Photo ID or selfie path not found");
+        }
+
         // 2. Download files
         const storageService = StorageService.getInstance();
-        const photoId = await storageService.downloadFileAsBase64(photoIdPath);
-        const selfie = await storageService.downloadFileAsBase64(selfiePath);
+        const photoId = await storageService.downloadFileAsBase64(profile.photoIdPath);
+        const selfie = await storageService.downloadFileAsBase64(profile.selfiePath);
 
         // 3. AI Verification
         const aiService = AIService.getInstance();
@@ -71,5 +103,26 @@ export class IdentityService {
         await this.profileRepo.save(profile);
 
         return aiResult;
+    }
+
+    public async verifyIdentityProcess() {
+        const events = await this.eventRepo.find({ where: { eventType: EventType.VERIFY_IDENTITY, status: EventStatus.PENDING, retryCount: LessThan(3) }, take: 5 });
+
+        const processing = events.map(event => {
+            event.status = EventStatus.PROCESSING;
+            return event;
+        });
+        await this.eventRepo.save(processing);
+
+        for (const event of events) {
+            event.retryCount++;
+            try {
+                await this.verifyIdentity(event.eventData.userId);
+                event.status = EventStatus.COMPLETED;
+            } catch (error) {
+                event.status = EventStatus.FAILED;
+            }
+            await this.eventRepo.save(event);
+        }
     }
 }
