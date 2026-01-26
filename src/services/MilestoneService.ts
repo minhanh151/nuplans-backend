@@ -82,17 +82,24 @@ export class MilestoneService {
             // Get milestone steps
             const steps = await this.milestoneStepRepo
                 .createQueryBuilder("ms")
-                .innerJoin("ms.profile", "profile")
                 .where("ms.milestoneId = :milestoneId", { milestoneId })
-                .andWhere("profile.userId = :userId", { userId: user.id })
                 .orderBy("ms.stepNumber", "ASC")
                 .getMany();
+
+            const stepsDetail = steps.map((step) => ({
+                id: step.id,
+                title: step.label,
+                description: step.description,
+                stepNumber: step.stepNumber,
+                completed: step.isCompleted,
+                createdAt: step.createdAt,
+            }));
 
             logger.info(`Retrieved milestone ${milestoneId} with ${steps.length} steps for user ${user.id}`);
 
             return {
                 id: milestone.id,
-                name: milestone.name,
+                title: milestone.name,
                 category: milestone.category || "",
                 priority: milestone.priority || "",
                 estimatedTime: milestone.estimatedTime || "",
@@ -103,10 +110,82 @@ export class MilestoneService {
                 progress: milestone.progress || 0,
                 status: milestone.status,
                 createdAt: milestone.createdAt,
-                steps: steps
+                steps: stepsDetail
             };
         } catch (error) {
             logger.error("Error fetching milestone detail:", error);
+            throw error;
+        }
+    }
+
+    /**
+     * Mark a milestone step as completed
+     * @param user - The authenticated user
+     * @param stepId - ID of the milestone step to complete
+     * @returns Updated milestone step
+     */
+    public async completeStep(
+        user: User,
+        stepId: string
+    ): Promise<MilestoneStep> {
+        try {
+            // Find the step and verify user owns the associated milestone
+            const step = await this.milestoneStepRepo
+                .createQueryBuilder("ms")
+                .leftJoinAndSelect("ms.milestone", "m")
+                .where("ms.id = :stepId", { stepId })
+                .andWhere("ms.userId = :userId", { userId: user.id })
+                .getOne();
+
+            if (!step) {
+                throw new Error("Milestone step not found or you don't have permission to update it");
+            }
+
+            // Update completion status
+            step.isCompleted = true;
+
+            const updatedStep = await this.milestoneStepRepo.save(step);
+
+            logger.info(`Milestone step ${stepId} marked as completed by user ${user.id}`);
+            return updatedStep;
+        } catch (error) {
+            logger.error("Error completing milestone step:", error);
+            throw error;
+        }
+    }
+
+    /**
+     * Mark a milestone step as uncompleted
+     * @param user - The authenticated user
+     * @param stepId - ID of the milestone step to uncomplete
+     * @returns Updated milestone step
+     */
+    public async uncompleteStep(
+        user: User,
+        stepId: string
+    ): Promise<MilestoneStep> {
+        try {
+            // Find the step and verify user owns the associated milestone
+            const step = await this.milestoneStepRepo
+                .createQueryBuilder("ms")
+                .leftJoinAndSelect("ms.milestone", "m")
+                .where("ms.id = :stepId", { stepId })
+                .andWhere("ms.userId = :userId", { userId: user.id })
+                .getOne();
+
+            if (!step) {
+                throw new Error("Milestone step not found or you don't have permission to update it");
+            }
+
+            // Update completion status
+            step.isCompleted = false;
+
+            const updatedStep = await this.milestoneStepRepo.save(step);
+
+            logger.info(`Milestone step ${stepId} marked as uncompleted by user ${user.id}`);
+            return updatedStep;
+        } catch (error) {
+            logger.error("Error uncompleting milestone step:", error);
             throw error;
         }
     }

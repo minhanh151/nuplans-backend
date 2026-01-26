@@ -72,4 +72,50 @@ export class MilestoneController extends BaseController {
             this.handleError(res, error, "Failed to retrieve milestone detail");
         }
     }
+
+    /**
+     * Mark a milestone step as completed
+     * Route params:
+     * - stepId: string (milestone step ID)
+     */
+    public async completeStep(req: Request, res: Response): Promise<void> {
+        try {
+            const user = (req as any).user;
+            const { stepId } = req.params;
+
+            if (!stepId) {
+                this.handleBadRequest(res, "Step ID is required");
+                return;
+            }
+
+            const result = await this.milestoneService.completeStep(user, stepId);
+
+            this.handleSuccess(res, result, "Milestone step marked as completed");
+        } catch (error: any) {
+            this.handleError(res, error, "Failed to complete milestone step");
+        }
+    }
+
+    /**
+     * Mark a milestone step as uncompleted
+     * Route params:
+     * - stepId: string (milestone step ID)
+     */
+    public async uncompleteStep(req: Request, res: Response): Promise<void> {
+        try {
+            const user = (req as any).user;
+            const { stepId } = req.params;
+
+            if (!stepId) {
+                this.handleBadRequest(res, "Step ID is required");
+                return;
+            }
+
+            const result = await this.milestoneService.uncompleteStep(user, stepId);
+
+            this.handleSuccess(res, result, "Milestone step marked as uncompleted");
+        } catch (error: any) {
+            this.handleError(res, error, "Failed to uncomplete milestone step");
+        }
+    }
 }

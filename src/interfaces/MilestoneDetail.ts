@@ -2,7 +2,7 @@ import { MilestoneStep } from "@/models/MilestoneStep";
 
 export interface MilestoneDetail {
     id: string;
-    name: string;
+    title: string;
     category: string;
     priority: string;
     estimatedTime: string;
@@ -14,5 +14,14 @@ export interface MilestoneDetail {
     status: string;
     createdAt: Date;
     evidence?: string;
-    steps: MilestoneStep[];
+    steps: MilestoneStepDetail[];
+}
+
+export interface MilestoneStepDetail {
+    id: string;
+    title: string;
+    description: string;
+    stepNumber: number;
+    completed: boolean;
+    createdAt: Date;
 }

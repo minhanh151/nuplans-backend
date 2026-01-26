@@ -55,6 +55,8 @@ router.patch("/daily-actions/:id/uncomplete", authenticate, (req, res) => dailyA
 // Milestone Routes
 router.get("/milestones", authenticate, (req, res) => milestoneController.getMilestones(req, res));
 router.get("/milestones/:id", authenticate, (req, res) => milestoneController.getMilestoneDetail(req, res));
+router.patch("/milestones/steps/:stepId/complete", authenticate, (req, res) => milestoneController.completeStep(req, res));
+router.patch("/milestones/steps/:stepId/uncomplete", authenticate, (req, res) => milestoneController.uncompleteStep(req, res));
 
 import { DashboardController } from "../controllers/DashboardController";
 
