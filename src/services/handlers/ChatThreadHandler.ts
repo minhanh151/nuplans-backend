@@ -22,7 +22,7 @@ export class ChatThreadHandler {
         return this.upsertThread(
             user,
             Constant.GROUP_TYPE.WEEKLY_PLAN,
-            parseInt(weeklyPlan.id),
+            weeklyPlan.id,
             `Weekly Plan - Week ${weeklyPlan.weekNumber}`
         );
     }
@@ -31,7 +31,7 @@ export class ChatThreadHandler {
         return this.upsertThread(
             user,
             Constant.GROUP_TYPE.MILESTONE,
-            parseInt(milestone.id),
+            milestone.id,
             milestone.name
         );
     }
@@ -40,7 +40,7 @@ export class ChatThreadHandler {
         return this.upsertThread(
             user,
             Constant.GROUP_TYPE.PROJECT,
-            parseInt(project.id),
+            project.id,
             project.name
         );
     }

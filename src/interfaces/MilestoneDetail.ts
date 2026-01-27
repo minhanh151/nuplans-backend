@@ -1,7 +1,7 @@
 import { MilestoneStep } from "@/models/MilestoneStep";
 
 export interface MilestoneDetail {
-    id: string;
+    id: number;
     title: string;
     category: string;
     priority: string;
@@ -18,7 +18,7 @@ export interface MilestoneDetail {
 }
 
 export interface MilestoneStepDetail {
-    id: string;
+    id: number;
     title: string;
     description: string;
     stepNumber: number;

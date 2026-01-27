@@ -5,7 +5,7 @@ import { WeeklyPlan } from "./WeeklyPlan";
 @Entity("daily_actions")
 export class DailyAction {
     @PrimaryGeneratedColumn({ type: "bigint" })
-    id!: string;
+    id!: number;
 
     @Column({ name: "user_id", type: "uuid" })
     userId!: string;
@@ -15,7 +15,7 @@ export class DailyAction {
     user!: User;
 
     @Column({ name: "weekly_plan_id", type: "bigint", nullable: true })
-    weeklyPlanId?: string;
+    weeklyPlanId?: number;
 
     @ManyToOne(() => WeeklyPlan)
     @JoinColumn({ name: "weekly_plan_id" })

@@ -5,7 +5,7 @@ import { MessageAction } from "./MessageAction";
 @Entity("chat_messages")
 export class ChatMessage {
     @PrimaryGeneratedColumn({ type: "bigint" })
-    id!: string;
+    id!: number;
 
     @Column({ name: "thread_id" })
     threadId!: string;

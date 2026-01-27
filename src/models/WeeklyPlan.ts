@@ -5,7 +5,7 @@ import { User } from "./User";
 @Entity("weekly_plans")
 export class WeeklyPlan {
     @PrimaryGeneratedColumn({ type: "bigint" })
-    id!: string;
+    id!: number;
 
     @Column({ name: "user_id", nullable: true })
     userId?: string;

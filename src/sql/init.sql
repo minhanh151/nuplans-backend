@@ -375,7 +375,7 @@ create table public.milestone_steps
     step_number  smallint,
     is_completed boolean                  default false not null,
     created_at   timestamp with time zone default now(),
-    updated_at   timestamp with time zone default now(),
+    updated_at   timestamp with time zone default now()
 );
 
 alter table public.milestone_steps
@@ -442,7 +442,7 @@ CREATE INDEX IF NOT EXISTS idx_milestone_steps_user_id ON milestone_steps(user_i
 
 -- Add start_date to milestones table
 ALTER TABLE public.milestones
-ADD COLUMN IF NOT EXISTS start_date TIMESTAMPTZ
+ADD COLUMN IF NOT EXISTS start_date TIMESTAMPTZ,
 ADD COLUMN IF NOT EXISTS evidence varchar(255);
 
 -- Add start_date and deadline to weekly_plans table

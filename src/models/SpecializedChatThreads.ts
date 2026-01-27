@@ -5,7 +5,7 @@ import { User } from "./User";
 @Entity("milestones")
 export class Milestone {
     @PrimaryGeneratedColumn({ type: "bigint" })
-    id!: string;
+    id!: number;
 
     @Column({ name: "user_id" })
     userId!: string;
@@ -40,7 +40,7 @@ export class Milestone {
 @Entity("projects")
 export class Project {
     @PrimaryGeneratedColumn({ type: "bigint" })
-    id!: string;
+    id!: number;
 
     @Column({ name: "user_id" })
     userId!: string;
@@ -78,7 +78,7 @@ export class Project {
 @Entity("thread_badges")
 export class ThreadBadge {
     @PrimaryGeneratedColumn({ type: "bigint" })
-    id!: string;
+    id!: number;
 
     @Column({ name: "thread_id" })
     threadId!: string;

@@ -5,7 +5,7 @@ import { User } from "./User";
 @Entity("milestone_steps")
 export class MilestoneStep {
     @PrimaryGeneratedColumn({ type: "bigint" })
-    id!: string;
+    id!: number;
 
     @Column({ name: "user_id", type: "uuid" })
     userId!: string;
@@ -15,7 +15,7 @@ export class MilestoneStep {
     user!: User;
 
     @Column({ name: "milestone_id", type: "bigint", nullable: true })
-    milestoneId?: string;
+    milestoneId?: number;
 
     @ManyToOne(() => Milestone)
     @JoinColumn({ name: "milestone_id" })

@@ -4,10 +4,10 @@ import { ChatMessage } from "./ChatMessage";
 @Entity("message_actions")
 export class MessageAction {
     @PrimaryGeneratedColumn({ type: "bigint" })
-    id!: string;
+    id!: number;
 
     @Column({ name: "message_id" })
-    messageId!: string;
+    messageId!: number;
 
     @ManyToOne(() => ChatMessage, (msg) => msg.actions)
     @JoinColumn({ name: "message_id" })

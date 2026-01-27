@@ -65,7 +65,7 @@ export class MilestoneService {
      */
     public async getMilestoneDetail(
         user: User,
-        milestoneId: string
+        milestoneId: number
     ): Promise<MilestoneDetail> {
         try {
             // Get milestone with user verification
@@ -126,7 +126,7 @@ export class MilestoneService {
      */
     public async completeStep(
         user: User,
-        stepId: string
+        stepId: number
     ): Promise<MilestoneStep> {
         try {
             // Find the step and verify user owns the associated milestone
@@ -162,7 +162,7 @@ export class MilestoneService {
      */
     public async uncompleteStep(
         user: User,
-        stepId: string
+        stepId: number
     ): Promise<MilestoneStep> {
         try {
             // Find the step and verify user owns the associated milestone

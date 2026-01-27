@@ -5,7 +5,7 @@ import { Project } from "./Project";
 @Entity("milestones")
 export class Milestone {
     @PrimaryGeneratedColumn({ type: "bigint" })
-    id!: string;
+    id!: number;
 
     @Column({ name: "user_id", type: "uuid" })
     userId!: string;

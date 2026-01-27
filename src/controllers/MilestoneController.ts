@@ -65,7 +65,7 @@ export class MilestoneController extends BaseController {
                 return;
             }
 
-            const result = await this.milestoneService.getMilestoneDetail(user, id);
+            const result = await this.milestoneService.getMilestoneDetail(user, Number(id));
 
             this.handleSuccess(res, result, "Milestone detail retrieved successfully");
         } catch (error: any) {
@@ -88,7 +88,7 @@ export class MilestoneController extends BaseController {
                 return;
             }
 
-            const result = await this.milestoneService.completeStep(user, stepId);
+            const result = await this.milestoneService.completeStep(user, Number(stepId));
 
             this.handleSuccess(res, result, "Milestone step marked as completed");
         } catch (error: any) {
@@ -111,7 +111,7 @@ export class MilestoneController extends BaseController {
                 return;
             }
 
-            const result = await this.milestoneService.uncompleteStep(user, stepId);
+            const result = await this.milestoneService.uncompleteStep(user, Number(stepId));
 
             this.handleSuccess(res, result, "Milestone step marked as uncompleted");
         } catch (error: any) {
