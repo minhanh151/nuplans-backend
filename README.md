@@ -129,12 +129,7 @@ npm install
 docker-compose up -d
 ```
 
-#### Option 2: Cài đặt PostgreSQL thủ công
-
-Tạo database mới:
-```sql
-CREATE DATABASE nuplans_db;
-```
+Sau đó vào sử dụng tool chạy các câu SQL trong file sql/init.sql
 
 ### 4. Cấu hình môi trường
 
@@ -156,7 +151,6 @@ DB_PORT=5432
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
 DB_NAME=nuplans_db
-DB_SYNC=true          # Auto sync schema (chỉ dùng trong development)
 DB_LOGGING=false
 ```
 

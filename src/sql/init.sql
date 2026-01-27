@@ -99,6 +99,8 @@ create table if not exists public.thread_groups (
     updated_at timestamptz default now()
 );
 
+INSERT INTO "public"."thread_groups" ("label", "created_at", "updated_at") VALUES ('Weekly plans', now(), now()), ('Milestones', now(), now()), ('Projects', now(), now()), ('General', now(), now());
+
 create table if not exists public.chat_threads (
   id uuid primary key default gen_random_uuid(),
   group_id int references public.thread_groups(id) on delete cascade,

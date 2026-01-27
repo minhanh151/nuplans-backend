@@ -8,7 +8,7 @@ const AppDataSource = new DataSource({
     username: config.DB.USERNAME,
     password: config.DB.PASSWORD,
     database: config.DB.NAME,
-    synchronize: config.DB.SYNC,
+    synchronize: false,
     logging: config.DB.LOGGING,
     entities: [
         __dirname + '/models/*.ts',

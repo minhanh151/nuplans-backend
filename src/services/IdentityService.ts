@@ -120,6 +120,7 @@ export class IdentityService {
                 await this.verifyIdentity(event.eventData.userId);
                 event.status = EventStatus.COMPLETED;
             } catch (error) {
+                logger.error("Error when verifying identity", error);
                 event.status = EventStatus.FAILED;
             }
             await this.eventRepo.save(event);

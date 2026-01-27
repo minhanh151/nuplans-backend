@@ -19,7 +19,7 @@ export class ChatThreadHandler {
     }
 
     public async createWeeklyPlanThread(user: User, weeklyPlan: WeeklyPlan) {
-        return this.upsertThread(
+        return await this.upsertThread(
             user,
             Constant.GROUP_TYPE.WEEKLY_PLAN,
             weeklyPlan.id,
@@ -28,7 +28,7 @@ export class ChatThreadHandler {
     }
 
     public async createMilestoneThread(user: User, milestone: Milestone) {
-        return this.upsertThread(
+        return await this.upsertThread(
             user,
             Constant.GROUP_TYPE.MILESTONE,
             milestone.id,
@@ -37,7 +37,7 @@ export class ChatThreadHandler {
     }
 
     public async createProjectThread(user: User, project: Project) {
-        return this.upsertThread(
+        return await this.upsertThread(
             user,
             Constant.GROUP_TYPE.PROJECT,
             project.id,
