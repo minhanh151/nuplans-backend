@@ -13,6 +13,7 @@ import { Milestone } from "@/models/Milestone";
 import { Project } from "@/models/Project";
 import { AISystemInstructions } from "@/services/ai/AISystemInstructions";
 import logger from "@/utils/logger";
+import { UserContextBuilder } from "./UserContextBuilder";
 
 
 export class ChatService {
@@ -116,11 +117,44 @@ export class ChatService {
         return groups;
     }
 
-    public async sendMessage(user: User, threadId: string, content: string, userContext?: UserContext) {
+    public async sendMessage(user: User, threadId: string, content: string) {
         const thread = await this.threadRepo.findOne({ where: { id: threadId, userId: user.id } });
         if (!thread) {
             throw new Error("Thread not found");
         }
+
+        const userContext = UserContextBuilder.getInstance().build(user);
+        let threadContext;
+
+        if (thread.groupId === Constant.GROUP_TYPE.MILESTONE) {
+            const milestone = await this.milestoneRepo.findOne({ where: { id: thread.groupObjectId } });
+            threadContext = {
+                milestoneName: milestone?.name,
+                milestoneStatus: milestone?.status,
+                progress: milestone?.progress,
+                deadline: milestone?.deadline,
+                evidenceSubmitted: milestone?.evidenceSubmitted,
+            }
+        } else if (thread.groupId === Constant.GROUP_TYPE.PROJECT) {
+            const project = await this.projectRepo.findOne({ where: { id: thread.groupObjectId } });
+            threadContext = {
+                projectName: project?.name,
+                projectStatus: project?.status,
+                description: project?.description,
+                estimatedHours: project?.estimatedHours,
+                stepsRemaining: project?.stepsRemaining,
+            }
+        } else if (thread.groupId === Constant.GROUP_TYPE.WEEKLY_PLAN) {
+            const weeklyPlan = await this.weeklyPlanRepo.findOne({ where: { id: thread.groupObjectId } });
+            threadContext = {
+                weekNumber: weeklyPlan?.weekNumber,
+                dateRange: weeklyPlan?.dateRange,
+                startDate: weeklyPlan?.startDate,
+                deadline: weeklyPlan?.deadline,
+                summary: weeklyPlan?.summary,
+            }
+        }
+
 
         const userMsg = new ChatMessage();
         userMsg.threadId = threadId;
@@ -134,20 +168,23 @@ export class ChatService {
 
         const history = await this.messageRepo.find({
             where: { threadId: threadId },
-            order: { createdAt: "ASC" },
+            order: { createdAt: "DESC" },
             take: 10
         });
 
-        const historyText = history.map(m => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n");
+        const historyText = history.reverse().map(m => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n");
 
         const aiService = AIService.getInstance();
-        const aiProvider = aiService.getProvider(AIProviderType.GEMINI);
+        const aiProvider = aiService.getProvider(AIProviderType.PLANNING_OPENAI);
 
         const userContextText = userContext ? `User context: ${JSON.stringify(userContext)}` : "";
 
+        const messageContent = `${userContextText}\nHistory: ${historyText}\nUser: ${content}\nThread context: ${JSON.stringify(threadContext)}`;
+        logger.info(messageContent);
+
         const aiRes = await aiProvider.generateContent({
             systemInstruction: AISystemInstructions.AI_COACHING_CHAT,
-            content: `${userContextText}\nHistory: ${historyText}\nUser: ${content}`
+            content: messageContent
         });
 
         let extractedData;

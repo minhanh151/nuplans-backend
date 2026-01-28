@@ -60,7 +60,7 @@ export class PlanningAssistant {
                 SKILLS: ${JSON.stringify(skillProfile)}
 
                 OUTPUT: A JSON object with "projects" array.
-                - "projects" array: items with "name", "description", "category", "impact", "priority" (high/medium/low).
+                - "projects" array: items with "name", "description", "category", "impact", "priority" (high/medium/low), estimated_hours.
                 Generate 2-4 strategic projects that align with the user's career goals.
                 All strings should be concise.
             `;
@@ -81,6 +81,7 @@ export class PlanningAssistant {
                     project.description = p.description;
                     project.impact = truncateString(p.impact, 50);
                     project.priority = truncateString(p.priority, 20);
+                    project.estimatedHours = p.estimated_hours;
                     project.status = "planning";
                     return project;
                 });

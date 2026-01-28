@@ -25,10 +25,10 @@ export class ChatController extends BaseController {
 
     public async sendMessage(req: Request, res: Response): Promise<void> {
         try {
-            const { threadId, content, userContext } = req.body;
+            const { threadId, content } = req.body;
             const user = (req as any).user;
 
-            const result = await this.chatService.sendMessage(user, threadId, content, userContext);
+            const result = await this.chatService.sendMessage(user, threadId, content);
             this.handleSuccess(res, result);
         } catch (error: any) {
             if (error.message === "Thread not found") {
