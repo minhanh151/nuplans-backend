@@ -21,7 +21,6 @@ export class GenerateDailyActionService implements EventHandler {
     private userRepo = AppDataSource.getRepository(User);
     private weeklyPlanRepo = AppDataSource.getRepository(WeeklyPlan);
     private profileRepo = AppDataSource.getRepository(Profile);
-    private milestoneRepo = AppDataSource.getRepository(Milestone);
 
     public static getInstance() {
         if (!GenerateDailyActionService.generateDailyActionService) {

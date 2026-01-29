@@ -113,4 +113,7 @@ export class Profile extends BaseEntity {
     @Column({ type: "timestamp with time zone", name: "idv_submitted_at", nullable: true })
     idvSubmittedAt?: Date;
 
+    @Column({ name: "plan_generation_status", default: 0 })
+    planGenerationStatus!: number;
+
 }

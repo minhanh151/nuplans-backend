@@ -451,3 +451,6 @@ ADD COLUMN IF NOT EXISTS evidence varchar(255);
 ALTER TABLE public.weekly_plans
 ADD COLUMN IF NOT EXISTS start_date TIMESTAMPTZ,
 ADD COLUMN IF NOT EXISTS deadline TIMESTAMPTZ;
+
+alter table public.profiles
+add column if not exists plan_generation_status smallint default 0;

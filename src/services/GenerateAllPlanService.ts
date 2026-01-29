@@ -13,6 +13,8 @@ import { PlanningAssistant } from "./assistant/PlanningAssistant";
 import { EventHandler } from "./handlers/EventHandler";
 import { UserContextBuilder } from "./UserContextBuilder";
 import { LessThan, MoreThan } from "typeorm";
+import { PlanGenerationStatus } from "@/interfaces/profile/PlanGenerationStatus";
+import { SkillProfile } from "@/models/SkillProfile";
 
 export class GenerateAllPlanService implements EventHandler {
     private static generateAllPlanService: GenerateAllPlanService;
@@ -20,6 +22,7 @@ export class GenerateAllPlanService implements EventHandler {
     private userRepo = AppDataSource.getRepository(User);
     private storeEventRepo = AppDataSource.getRepository(StoredEvent);
     private profileRepo = AppDataSource.getRepository(Profile);
+    private skillProfileRepo = AppDataSource.getRepository(SkillProfile);
 
     public static getInstance() {
         if (!GenerateAllPlanService.generateAllPlanService) {
@@ -57,12 +60,14 @@ export class GenerateAllPlanService implements EventHandler {
                 const listMilestones = await planningAssistant.generateMilestones(user, profile, project);
                 logger.info("Milestones generated: ", listMilestones.map(item => item.name))
             }
-
+            profile.planGenerationStatus = PlanGenerationStatus.GENERATED;
+            await this.profileRepo.save(profile);
             const weeklyPlan = await planningAssistant.generateWeeklyPlan(user, userContext, 1);
             if (new Date() >= weeklyPlan.startDate && new Date() <= weeklyPlan.deadline) {
                 await planningAssistant.generateDailyActions(userContext, profile, weeklyPlan);
                 logger.info("Daily actions generated: ", weeklyPlan.id);
             }
+            event.status = EventStatus.COMPLETED;
         } catch (e: any) {
             logger.error("Error when processing event generate milestone's steps", e);
             if (event.retryCount >= Constant.MAX_RETRY_COUNT) {
@@ -71,8 +76,21 @@ export class GenerateAllPlanService implements EventHandler {
                 event.status = EventStatus.PENDING;
             }
         }
-        event.status = EventStatus.COMPLETED;
         this.storeEventRepo.save(event);
+    }
+
+    public async preCheckGenerateAllPlan(user: User) {
+        const profile = await this.profileRepo.findOne({ where: { userId: user.id } });
+        if (!profile) {
+            throw new Error("Profile not found");
+        }
+        if (profile.planGenerationStatus != PlanGenerationStatus.NOT_GENERATED) {
+            throw new Error("Plan is inprogress or already generated");
+        }
+        const skillProfile = await this.skillProfileRepo.findOne({ where: { profileId: profile.id } });
+        if (!skillProfile) {
+            throw new Error("Skill profile not found");
+        }
     }
 
 }
