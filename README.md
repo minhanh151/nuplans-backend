@@ -1,79 +1,79 @@
 # Nuplans Backend API
 
-Backend service cho ứng dụng Nuplans - Hệ thống quản lý kế hoạch cá nhân và phát triển sự nghiệp với AI.
+Backend service for Nuplans - Personal planning and career development system with AI integration.
 
-## 📋 Mục lục
+## 📋 Table of Contents
 
-- [Tổng quan](#tổng-quan)
-- [Tính năng chính](#tính-năng-chính)
-- [Công nghệ sử dụng](#công-nghệ-sử-dụng)
-- [Yêu cầu hệ thống](#yêu-cầu-hệ-thống)
-- [Cài đặt](#cài-đặt)
-- [Cấu hình](#cấu-hình)
-- [Chạy ứng dụng](#chạy-ứng-dụng)
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [Technology Stack](#technology-stack)
+- [System Requirements](#system-requirements)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Running the Application](#running-the-application)
 - [API Documentation](#api-documentation)
-- [Cấu trúc thư mục](#cấu-trúc-thư-mục)
+- [Project Structure](#project-structure)
 
-## 🎯 Tổng quan
+## 🎯 Overview
 
-Nuplans Backend là một RESTful API service được xây dựng với Node.js, Express, và TypeORM. Hệ thống cung cấp các tính năng quản lý kế hoạch cá nhân, phát triển sự nghiệp, và tích hợp AI để hỗ trợ người dùng.
+Nuplans Backend is a RESTful API service built with Node.js, Express, and TypeORM. The system provides personal planning management, career development features, and AI integration to support users.
 
-## ✨ Tính năng chính
+## ✨ Key Features
 
 ### 🔐 Authentication & Authorization
-- Đăng ký và đăng nhập người dùng
+- User registration and login
 - JWT-based authentication
 - Email verification
 - Password reset
 - Refresh token mechanism
 
 ### 👤 User Profile & Onboarding
-- Quản lý thông tin cá nhân
-- CV upload và parsing (PDF, DOCX)
-- Lưu trữ CV trên Supabase Storage
+- Personal information management
+- CV upload and parsing (PDF, DOCX)
+- CV storage on Supabase Storage
 - Profile completion tracking
 
 ### 🎯 Planning & Goals
-- **Projects**: Quản lý các dự án cá nhân
-- **Milestones**: Các mốc quan trọng trong dự án
-- **Milestone Steps**: Các bước chi tiết để hoàn thành milestone
-- **Weekly Plans**: Kế hoạch hàng tuần
-- **Daily Actions**: Các hành động cần làm hàng ngày
+- **Projects**: Personal project management
+- **Milestones**: Important project milestones
+- **Milestone Steps**: Detailed steps to complete milestones
+- **Weekly Plans**: Weekly planning
+- **Daily Actions**: Daily action items
 
 ### 🤖 AI Integration
-- Phân tích CV tự động với AI
-- Tạo kế hoạch phát triển sự nghiệp
-- Gợi ý daily actions và milestones
-- Chat assistant cho planning
+- Automatic CV analysis with AI
+- Career development plan generation
+- Daily actions and milestones suggestions
+- Chat assistant for planning
 
 ### 💬 Chat System
-- Chat threads cho từng context (project, milestone, weekly plan)
+- Chat threads for each context (project, milestone, weekly plan)
 - Chat history management
 - Archive/Unarchive threads
 - AI-powered responses
 
 ### 📊 Credit Assessment
-- Đánh giá năng lực người dùng
-- Tính toán credit score
-- Tracking progress
+- User capability assessment
+- Credit score calculation
+- Progress tracking
 
 ### 🔄 Cron Jobs
-- Tự động tạo weekly plans
+- Automatic weekly plan generation
 - Scheduled events processing
 - Background tasks
 
 ### 📝 Logging & Monitoring
-- Request/Response logging với Winston
-- Trace ID cho mỗi request
-- Structured logging với context
+- Request/Response logging with Winston
+- Trace ID for each request
+- Structured logging with context
 
-## 🛠 Công nghệ sử dụng
+## 🛠 Technology Stack
 
 ### Core
 - **Node.js** (>= 18.0.0)
 - **TypeScript** - Type safety
 - **Express** - Web framework
-- **TypeORM** - ORM cho PostgreSQL
+- **TypeORM** - ORM for PostgreSQL
 
 ### Database
 - **PostgreSQL** - Primary database
@@ -100,13 +100,13 @@ Nuplans Backend là một RESTful API service được xây dựng với Node.js
 - **Nodemailer** - Email sending
 - **Axios** - HTTP client
 
-## 📦 Yêu cầu hệ thống
+## 📦 System Requirements
 
 - Node.js >= 18.0.0
 - PostgreSQL >= 13
-- npm hoặc yarn
+- npm or yarn
 
-## 🚀 Cài đặt
+## 🚀 Installation
 
 ### 1. Clone repository
 
@@ -115,33 +115,38 @@ git clone <repository-url>
 cd nuplans-be
 ```
 
-### 2. Cài đặt dependencies
+### 2. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Cấu hình database
+### 3. Database setup
 
-#### Option 1: Sử dụng Docker Compose (Recommended)
+#### Option 1: Using Docker Compose (Recommended)
 
 ```bash
 docker-compose up -d
 ```
 
-Sau đó vào sử dụng tool chạy các câu SQL trong file sql/init.sql
+#### Option 2: Manual PostgreSQL installation
 
-### 4. Cấu hình môi trường
+Create a new database:
+```sql
+CREATE DATABASE nuplans_db;
+```
 
-Copy file `.env.example` thành `.env`:
+### 4. Environment configuration
+
+Copy `.env.example` to `.env`:
 
 ```bash
 cp .env.example .env
 ```
 
-Cập nhật các biến môi trường trong file `.env` (xem phần [Cấu hình](#cấu-hình))
+Update environment variables in `.env` file (see [Configuration](#configuration) section)
 
-## ⚙️ Cấu hình
+## ⚙️ Configuration
 
 ### Database Configuration
 
@@ -151,6 +156,7 @@ DB_PORT=5432
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
 DB_NAME=nuplans_db
+DB_SYNC=true          # Auto sync schema (development only)
 DB_LOGGING=false
 ```
 
@@ -211,7 +217,7 @@ CV_BUCKET=cvs
 CORS_ORIGIN=http://localhost:8080
 ```
 
-## 🏃 Chạy ứng dụng
+## 🏃 Running the Application
 
 ### Development mode
 
@@ -219,7 +225,7 @@ CORS_ORIGIN=http://localhost:8080
 npm run dev
 ```
 
-Server sẽ chạy tại `http://localhost:3000` với hot-reload.
+Server will run at `http://localhost:3000` with hot-reload.
 
 ### Production mode
 
@@ -233,7 +239,7 @@ npm start
 
 ### Health Check
 
-Kiểm tra server đang chạy:
+Check if server is running:
 
 ```bash
 curl http://localhost:3000/health
@@ -258,7 +264,7 @@ http://localhost:3000/api
 
 ### Authentication
 
-Hầu hết các endpoints yêu cầu JWT token trong header:
+Most endpoints require JWT token in header:
 
 ```
 Authorization: Bearer <your-jwt-token>
@@ -266,7 +272,7 @@ Authorization: Bearer <your-jwt-token>
 
 ### Response Format
 
-Tất cả responses đều có format chuẩn:
+All responses follow a standard format:
 
 **Success Response:**
 ```json
@@ -284,13 +290,13 @@ Tất cả responses đều có format chuẩn:
   "success": false,
   "code": "ERROR_CODE",
   "message": "Error message",
-  "error": { ... }  // Chỉ có trong development mode
+  "error": { ... }  // Only in development mode
 }
 ```
 
 ### Headers
 
-Mọi response đều có `X-Trace-Id` header để tracking:
+All responses include `X-Trace-Id` header for tracking:
 
 ```
 X-Trace-Id: 75764b88-b3e8-454f-89ab-8139023fad1f
@@ -302,12 +308,12 @@ X-Trace-Id: 75764b88-b3e8-454f-89ab-8139023fad1f
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/register` | Đăng ký tài khoản mới |
-| POST | `/login` | Đăng nhập |
-| POST | `/verify-email` | Xác thực email |
-| POST | `/resend-verification` | Gửi lại email xác thực |
-| POST | `/forgot-password` | Quên mật khẩu |
-| POST | `/reset-password` | Reset mật khẩu |
+| POST | `/register` | Register new account |
+| POST | `/login` | User login |
+| POST | `/verify-email` | Verify email |
+| POST | `/resend-verification` | Resend verification email |
+| POST | `/forgot-password` | Forgot password |
+| POST | `/reset-password` | Reset password |
 | POST | `/refresh-token` | Refresh JWT token |
 
 #### CV Management (`/api/cv`)
@@ -315,49 +321,49 @@ X-Trace-Id: 75764b88-b3e8-454f-89ab-8139023fad1f
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/upload` | Upload CV file |
-| POST | `/parse` | Parse CV với AI |
-| POST | `/save-profile` | Lưu thông tin từ CV |
+| POST | `/parse` | Parse CV with AI |
+| POST | `/save-profile` | Save profile from CV |
 
 #### Onboarding (`/api/onboarding`)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/profile` | Lấy thông tin profile |
-| POST | `/save` | Lưu thông tin onboarding |
+| GET | `/profile` | Get profile information |
+| POST | `/save` | Save onboarding information |
 
 #### Daily Actions (`/api/daily-actions`)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/` | Lấy danh sách daily actions |
-| PATCH | `/:id/complete` | Đánh dấu hoàn thành |
-| PATCH | `/:id/uncomplete` | Bỏ đánh dấu hoàn thành |
+| GET | `/` | Get daily actions list |
+| PATCH | `/:id/complete` | Mark as completed |
+| PATCH | `/:id/uncomplete` | Unmark as completed |
 
 **Query Parameters:**
-- `limit`: Số lượng records (default: 10)
-- `createdDate`: Filter theo ngày (YYYY-MM-DD)
+- `limit`: Number of records (default: 10)
+- `createdDate`: Filter by date (YYYY-MM-DD)
 
 #### Milestones (`/api/milestones`)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/` | Lấy danh sách milestones |
-| GET | `/:id` | Lấy chi tiết milestone |
-| PATCH | `/steps/:stepId/complete` | Đánh dấu step hoàn thành |
-| PATCH | `/steps/:stepId/uncomplete` | Bỏ đánh dấu step hoàn thành |
+| GET | `/` | Get milestones list |
+| GET | `/:id` | Get milestone details |
+| PATCH | `/steps/:stepId/complete` | Mark step as completed |
+| PATCH | `/steps/:stepId/uncomplete` | Unmark step as completed |
 
 **Query Parameters:**
-- `limit`: Số lượng records (default: 10)
-- `maxDeadline`: Filter theo deadline (YYYY-MM-DD)
-- `status`: Filter theo status
+- `limit`: Number of records (default: 10)
+- `maxDeadline`: Filter by deadline (YYYY-MM-DD)
+- `status`: Filter by status
 
 #### Chat (`/api/chat`)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/threads` | Lấy danh sách chat threads |
-| GET | `/history/:threadId` | Lấy lịch sử chat |
-| POST | `/message` | Gửi message |
+| GET | `/threads` | Get chat threads list |
+| GET | `/history/:threadId` | Get chat history |
+| POST | `/message` | Send message |
 | POST | `/archive` | Archive thread |
 | POST | `/unarchive` | Unarchive thread |
 
@@ -365,8 +371,8 @@ X-Trace-Id: 75764b88-b3e8-454f-89ab-8139023fad1f
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/latest` | Lấy credit assessment mới nhất |
-| POST | `/calculate` | Tính toán credit score |
+| GET | `/latest` | Get latest credit assessment |
+| POST | `/calculate` | Calculate credit score |
 
 #### Dashboard (`/api/dashboard`)
 
@@ -379,9 +385,9 @@ X-Trace-Id: 75764b88-b3e8-454f-89ab-8139023fad1f
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/verify` | Xác thực danh tính |
+| POST | `/verify` | Verify identity |
 
-## 📁 Cấu trúc thư mục
+## 📁 Project Structure
 
 ```
 nuplans-be/
@@ -411,44 +417,44 @@ nuplans-be/
 
 ```bash
 # Development
-npm run dev              # Chạy với hot-reload
+npm run dev              # Run with hot-reload
 
 # Production
 npm run build           # Build TypeScript
-npm start              # Chạy production build
+npm start              # Run production build
 
 # Code Quality
-npm run lint           # Chạy ESLint
-npm run format         # Format code với Prettier
+npm run lint           # Run ESLint
+npm run format         # Format code with Prettier
 ```
 
 ## 📝 Logging
 
-Logs được lưu trong thư mục `logs/`:
-- `combined.log` - Tất cả logs
-- Console output trong development mode
+Logs are saved in the `logs/` directory:
+- `combined.log` - All logs
+- Console output in development mode
 
-Mỗi log entry bao gồm:
-- `timestamp` - Thời gian
+Each log entry includes:
+- `timestamp` - Time
 - `level` - Log level (info, error, warn)
-- `message` - Nội dung log
-- `traceId` - Trace ID của request
+- `message` - Log content
+- `traceId` - Request trace ID
 - `service` - Service name
 
 ## 🔍 Debugging
 
 ### Trace ID
 
-Mỗi request có một unique trace ID để tracking:
+Each request has a unique trace ID for tracking:
 
 ```bash
-# Tìm logs theo trace ID
+# Find logs by trace ID
 grep "75764b88-b3e8-454f-89ab-8139023fad1f" logs/combined.log
 ```
 
 ### Database Queries
 
-Bật logging cho TypeORM trong `.env`:
+Enable TypeORM logging in `.env`:
 
 ```env
 DB_LOGGING=true
@@ -456,11 +462,11 @@ DB_LOGGING=true
 
 ## 🤝 Contributing
 
-1. Fork repository
-2. Tạo feature branch (`git checkout -b feature/AmazingFeature`)
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Tạo Pull Request
+5. Create Pull Request
 
 ## 📄 License
 
@@ -468,7 +474,7 @@ Private project - All rights reserved
 
 ## 👥 Contact
 
-Project Link: 
+Project Link: [https://github.com/yourusername/nuplans-be](https://github.com/yourusername/nuplans-be)
 
 ---
 
