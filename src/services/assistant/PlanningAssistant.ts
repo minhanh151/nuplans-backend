@@ -258,7 +258,7 @@ export class PlanningAssistant {
                 action.weeklyPlanId = weeklyPlan.id;
                 action.title = truncateString(a.title, 300);
                 action.description = a.description;
-                action.priority = truncateString(a.priority, 50);
+                action.priority = truncateString(a.priority, 50).toLowerCase();
                 action.category = truncateString(a.category, 50);
                 action.estimatedTime = truncateString(a.estimated_time, 50);
                 return action;
