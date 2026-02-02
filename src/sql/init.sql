@@ -146,7 +146,7 @@ CREATE TABLE if not exists public.milestones (
     id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id uuid not null,
     name VARCHAR(300) NOT NULL,
-    status varchar(50) check (status in ('approved', 'under-review', 'pending')),
+    status varchar(50) DEFAULT 'pending',
     created_at timestamptz default now(),
     updated_at timestamptz default now()
 );
