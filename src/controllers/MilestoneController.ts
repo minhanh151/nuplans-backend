@@ -118,4 +118,35 @@ export class MilestoneController extends BaseController {
             this.handleError(res, error, "Failed to uncomplete milestone step");
         }
     }
+
+    /**
+     * Submit milestone for review
+     * Route params:
+     * - id: string (milestone ID)
+     * Body:
+     * - fileUrl: string (evidence file URL - text/image/video)
+     */
+    public async submitReview(req: Request, res: Response): Promise<void> {
+        try {
+            const user = (req as any).user;
+            const { id } = req.params;
+            const { fileUrl } = req.body;
+
+            if (!id) {
+                this.handleBadRequest(res, "Milestone ID is required");
+                return;
+            }
+
+            if (!fileUrl) {
+                this.handleBadRequest(res, "File URL is required");
+                return;
+            }
+
+            const result = await this.milestoneService.submitReview(user, Number(id), fileUrl);
+
+            this.handleSuccess(res, result, "Milestone submitted for review successfully");
+        } catch (error: any) {
+            this.handleError(res, error, "Failed to submit milestone for review");
+        }
+    }
 }

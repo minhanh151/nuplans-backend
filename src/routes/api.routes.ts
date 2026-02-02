@@ -57,6 +57,7 @@ router.get("/milestones", authenticate, (req, res) => milestoneController.getMil
 router.get("/milestones/:id", authenticate, (req, res) => milestoneController.getMilestoneDetail(req, res));
 router.patch("/milestones/steps/:stepId/complete", authenticate, (req, res) => milestoneController.completeStep(req, res));
 router.patch("/milestones/steps/:stepId/uncomplete", authenticate, (req, res) => milestoneController.uncompleteStep(req, res));
+router.post("/milestones/:id/submit-review", authenticate, (req, res) => milestoneController.submitReview(req, res));
 
 import { DashboardController } from "../controllers/DashboardController";
 

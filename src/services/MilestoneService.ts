@@ -5,6 +5,7 @@ import { User } from "@/models/User";
 import { LessThanOrEqual } from "typeorm";
 import logger from "@/utils/logger";
 import { MilestoneDetail } from "@/interfaces/MilestoneDetail";
+import { MilestoneStatus } from "@/interfaces/milestone/MilestoneStatus";
 
 export class MilestoneService {
     private milestoneRepo = AppDataSource.getRepository(Milestone);
@@ -186,6 +187,58 @@ export class MilestoneService {
             return updatedStep;
         } catch (error) {
             logger.error("Error uncompleting milestone step:", error);
+            throw error;
+        }
+    }
+
+    /**
+     * Submit review for a milestone
+     * @param user - The authenticated user
+     * @param milestoneId - ID of the milestone
+     * @param fileUrl - Evidence file URL (text/image/video)
+     * @returns Success status
+     */
+    public async submitReview(
+        user: User,
+        milestoneId: number,
+        fileUrl: string
+    ): Promise<{ success: boolean }> {
+        try {
+            // Get milestone with user verification
+            const milestone = await this.milestoneRepo
+                .createQueryBuilder("m")
+                .where("m.id = :milestoneId", { milestoneId })
+                .andWhere("m.userId = :userId", { userId: user.id })
+                .getOne();
+
+            if (!milestone) {
+                throw new Error("Milestone not found or you don't have permission to update it");
+            }
+
+            // Get all steps for this milestone
+            const steps = await this.milestoneStepRepo
+                .createQueryBuilder("ms")
+                .where("ms.milestoneId = :milestoneId", { milestoneId })
+                .getMany();
+
+            // Check if all steps are completed
+            const allStepsCompleted = steps.length > 0 && steps.every(step => step.isCompleted === true);
+
+            if (!allStepsCompleted) {
+                throw new Error("All milestone steps must be completed before submitting for review");
+            }
+
+            // Update milestone with evidence and status
+            milestone.evidence = fileUrl;
+            milestone.evidenceSubmitted = true;
+            milestone.status = MilestoneStatus.UNDER_REVIEW;
+
+            await this.milestoneRepo.save(milestone);
+
+            logger.info(`Milestone ${milestoneId} submitted for review by user ${user.id}`);
+            return { success: true };
+        } catch (error) {
+            logger.error("Error submitting milestone for review:", error);
             throw error;
         }
     }
