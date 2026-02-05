@@ -18,7 +18,8 @@ export class IdentityController extends BaseController {
             const result = await this.identityService.prepareVerifyIdentity(user, photoIdPath, selfiePath);
             this.handleSuccess(res, { success: true, result });
         } catch (error: any) {
-            this.handleError(res, error, "Failed to verify identity");
+            const errorMessage = error.message || "Failed to verify identity";
+            this.handleError(res, error, errorMessage);
         }
     }
 }

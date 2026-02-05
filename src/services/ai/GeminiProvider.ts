@@ -6,7 +6,7 @@ export class GeminiProvider implements IAIProvider {
     private genAI: GoogleGenerativeAI;
     private model: string;
 
-    constructor(apiKey: string, model: string = "gemini-1.5-flash") {
+    constructor(apiKey: string, model: string = "gemini-2.5-flash") {
         this.genAI = new GoogleGenerativeAI(apiKey);
         this.model = model;
     }
@@ -31,7 +31,7 @@ export class GeminiProvider implements IAIProvider {
         }
 
         const result = await genModel.generateContent(contents);
-        const response = await result.response;
+        const response = result.response;
 
         const text = response.text();
         logger.info(`GeminiProvider response: ${text}`);

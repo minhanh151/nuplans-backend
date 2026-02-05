@@ -37,12 +37,7 @@ export class IdentityService {
         profile.idvSubmittedAt = new Date();
         await this.profileRepo.save(profile);
 
-        const event = new StoredEvent();
-        event.eventType = EventType.VERIFY_IDENTITY;
-        event.eventData = {
-            userId: user.id,
-        }
-        await this.eventRepo.save(event);
+        await this.verifyIdentity(user.id);
     }
 
     public async verifyIdentity(userId: string) {
@@ -81,15 +76,15 @@ export class IdentityService {
         - "reason": string (short explanation)
         - "extractedName": string (if visible on ID)`;
 
-        const aiRes = await aiProvider.generateContent({
-            systemInstruction: prompt,
-            content: "Compare these two images.",
-            files: [photoId, selfie]
-        });
-        logger.info(aiRes);
-
         let aiResult;
+
         try {
+            const aiRes = await aiProvider.generateContent({
+                systemInstruction: prompt,
+                content: "Compare these two images.",
+                files: [photoId, selfie]
+            });
+
             let cleanedText = aiRes.content.trim();
             const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
             if (jsonMatch) cleanedText = jsonMatch[0];
@@ -100,6 +95,10 @@ export class IdentityService {
 
         // 4. Update final result
         profile.idvStatus = aiResult.isVerified ? "verified" : "failed";
+        if (!aiResult.isVerified) {
+            logger.error("Identity verification failed", aiResult.reason);
+            throw new Error(aiResult.reason);
+        }
         await this.profileRepo.save(profile);
 
         return aiResult;
