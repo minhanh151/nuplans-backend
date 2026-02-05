@@ -454,3 +454,9 @@ ADD COLUMN IF NOT EXISTS deadline TIMESTAMPTZ;
 
 alter table public.profiles
 add column if not exists plan_generation_status smallint default 0;
+
+-- Add status, evidence_path, approved_at to daily_actions
+ALTER TABLE public.daily_actions
+ADD COLUMN IF NOT EXISTS status SMALLINT NOT NULL DEFAULT 0,
+ADD COLUMN IF NOT EXISTS evidence_path TEXT,
+ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;

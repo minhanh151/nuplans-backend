@@ -42,6 +42,15 @@ export class DailyAction {
     @Column({ default: false })
     completed!: boolean;
 
+    @Column({ type: "smallint", default: 0 })
+    status!: number; // 0: in-progress, 1: submitted
+
+    @Column({ name: "evidence_path", type: "text", nullable: true })
+    evidencePath?: string;
+
+    @Column({ name: "approved_at", type: "timestamp with time zone", nullable: true })
+    approvedAt?: Date;
+
     @CreateDateColumn({ type: "timestamp with time zone", name: "created_at" })
     createdAt!: Date;
 }

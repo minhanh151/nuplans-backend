@@ -49,21 +49,29 @@ export class DailyActionController extends BaseController {
     }
 
     /**
-     * Mark a daily action as completed
+     * Mark a daily action as completed (submitted)
      * Route params:
      * - id: string (daily action ID)
+     * Body:
+     * - evidencePath: string (path to evidence image)
      */
     public async completeDailyAction(req: Request, res: Response): Promise<void> {
         try {
             const user = (req as any).user;
             const { id } = req.params;
+            const { evidencePath } = req.body;
 
             if (!id) {
                 this.handleBadRequest(res, "Daily action ID is required");
                 return;
             }
 
-            const updatedAction = await this.dailyActionService.completeDailyAction(user, id);
+            if (!evidencePath) {
+                this.handleBadRequest(res, "Evidence path is required");
+                return;
+            }
+
+            const updatedAction = await this.dailyActionService.completeDailyAction(user, id, evidencePath);
 
             this.handleSuccess(res, updatedAction, "Daily action marked as completed");
         } catch (error: any) {

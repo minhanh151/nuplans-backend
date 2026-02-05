@@ -4,6 +4,7 @@ import { Profile } from "@/models/Profile";
 import { User } from "@/models/User";
 import { Between, LessThanOrEqual, MoreThanOrEqual } from "typeorm";
 import logger from "@/utils/logger";
+import { DailyActionStatus } from "@/interfaces/dailyAction/DailyActionStatus";
 
 export class DailyActionService {
     private dailyActionRepo = AppDataSource.getRepository(DailyAction);
@@ -53,6 +54,9 @@ export class DailyActionService {
                     "da.estimatedTime",
                     "da.actionDate",
                     "da.completed",
+                    "da.status",
+                    "da.evidencePath",
+                    "da.approvedAt",
                     "da.createdAt",
                 ])
                 .getMany();
@@ -66,14 +70,16 @@ export class DailyActionService {
     }
 
     /**
-     * Mark a daily action as completed and update actionDate to today
+     * Mark a daily action as completed (submitted) and save evidence path
      * @param user - The authenticated user
      * @param actionId - ID of the daily action to complete
+     * @param evidencePath - Path to the evidence image
      * @returns Updated daily action
      */
     public async completeDailyAction(
         user: User,
-        actionId: string
+        actionId: string,
+        evidencePath: string
     ): Promise<DailyAction> {
         try {
             // Find the daily action with user verification
@@ -87,13 +93,17 @@ export class DailyActionService {
                 throw new Error("Daily action not found or you don't have permission to update it");
             }
 
-            // Update completed status and actionDate to today
-            dailyAction.completed = true;
+            if (dailyAction.status !== DailyActionStatus.IN_PROGRESS) {
+                throw new Error("Daily action can only be completed when status is in-progress (0)");
+            }
+
             dailyAction.actionDate = new Date();
+            dailyAction.evidencePath = evidencePath;
+            dailyAction.status = DailyActionStatus.SUBMITTED;
 
             const updatedAction = await this.dailyActionRepo.save(dailyAction);
 
-            logger.info(`Daily action ${actionId} marked as completed by user ${user.id}`);
+            logger.info(`Daily action ${actionId} marked as completed (submitted) by user ${user.id}`);
             return updatedAction;
         } catch (error) {
             logger.error("Error completing daily action:", error);
@@ -102,7 +112,7 @@ export class DailyActionService {
     }
 
     /**
-     * Mark a daily action as incomplete and reset actionDate
+     * Mark a daily action as incomplete and reset status/evidence
      * @param user - The authenticated user
      * @param actionId - ID of the daily action to uncomplete
      * @returns Updated daily action
@@ -123,9 +133,14 @@ export class DailyActionService {
                 throw new Error("Daily action not found or you don't have permission to update it");
             }
 
-            // Update completed status and reset actionDate
+            if (dailyAction.status !== DailyActionStatus.SUBMITTED) {
+                throw new Error("Daily action can only be uncompleted when status is submitted (1)");
+            }
+
             dailyAction.completed = false;
             dailyAction.actionDate = null as any;
+            dailyAction.evidencePath = '';
+            dailyAction.status = DailyActionStatus.IN_PROGRESS;
 
             const updatedAction = await this.dailyActionRepo.save(dailyAction);
 
