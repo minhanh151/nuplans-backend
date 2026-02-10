@@ -13,6 +13,7 @@ import { sendError } from './utils/apiResponse';
 import { StatusCodes } from 'http-status-codes';
 import authRoutes from './routes/auth.routes';
 import apiRoutes from './routes/api.routes';
+import adminRoutes from './routes/admin.routes';
 
 class App {
   public app: Application;
@@ -73,6 +74,9 @@ class App {
     // API routes will be mounted here
     this.app.use('/api/auth', authRoutes);
     this.app.use('/api', apiRoutes);
+
+    // Admin routes
+    this.app.use('/admin', adminRoutes);
 
     // Handle 404
     this.app.use((req: Request, res: Response) => {

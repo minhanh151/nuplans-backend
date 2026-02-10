@@ -29,6 +29,13 @@ export interface IConfig {
     REFRESH_EXPIRES_IN: string;
   };
 
+  JWT_ADMIN: {
+    SECRET: string;
+    EXPIRES_IN: string;
+    REFRESH_SECRET: string;
+    REFRESH_EXPIRES_IN: string;
+  };
+
   // CORS configuration
   CORS: {
     ORIGIN: string | string[];
@@ -95,6 +102,13 @@ const config: IConfig = {
     EXPIRES_IN: process.env.JWT_EXPIRES_IN || '24h',
     REFRESH_SECRET: process.env.REFRESH_SECRET || 'your_refresh_token_secret_here',
     REFRESH_EXPIRES_IN: process.env.REFRESH_EXPIRES_IN || '7d'
+  },
+
+  JWT_ADMIN: {
+    SECRET: process.env.JWT_ADMIN_SECRET || 'your_jwt_admin_secret_key_here',
+    EXPIRES_IN: process.env.JWT_ADMIN_EXPIRES_IN || '24h',
+    REFRESH_SECRET: process.env.JWT_ADMIN_REFRESH_SECRET || 'your_jwt_admin_refresh_token_secret_here',
+    REFRESH_EXPIRES_IN: process.env.JWT_ADMIN_REFRESH_EXPIRES_IN || '7d'
   },
 
   CORS: {
