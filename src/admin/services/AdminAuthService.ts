@@ -38,7 +38,7 @@ export class AdminAuthService {
         // Return admin without password
         const { password: _, ...adminWithoutPassword } = admin;
 
-        return { admin: adminWithoutPassword, accessToken, refreshToken };
+        return { user: adminWithoutPassword, accessToken, refreshToken };
     }
 
     private async generateTokens(admin: Admin) {

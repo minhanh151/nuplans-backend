@@ -5,9 +5,11 @@ import { User } from "@/models/User";
 import { Between, LessThanOrEqual, MoreThanOrEqual } from "typeorm";
 import logger from "@/utils/logger";
 import { DailyActionStatus } from "@/interfaces/dailyAction/DailyActionStatus";
+import { UserSubmission, SubmissionType, SubmissionStatus } from "@/admin/models/UserSubmission";
 
 export class DailyActionService {
     private dailyActionRepo = AppDataSource.getRepository(DailyAction);
+    private userSubmissionRepo = AppDataSource.getRepository(UserSubmission);
 
     /**
      * Get daily actions for a user with optional filters
@@ -103,6 +105,16 @@ export class DailyActionService {
 
             const updatedAction = await this.dailyActionRepo.save(dailyAction);
 
+            // Create user submission record
+            const submission = this.userSubmissionRepo.create({
+                userId: user.id,
+                submissionType: SubmissionType.DAILY_ACTION,
+                referenceId: Number(actionId),
+                evidencePath: evidencePath,
+                status: SubmissionStatus.SUBMITTED,
+            });
+            await this.userSubmissionRepo.save(submission);
+
             logger.info(`Daily action ${actionId} marked as completed (submitted) by user ${user.id}`);
             return updatedAction;
         } catch (error) {
@@ -143,6 +155,13 @@ export class DailyActionService {
             dailyAction.status = DailyActionStatus.IN_PROGRESS;
 
             const updatedAction = await this.dailyActionRepo.save(dailyAction);
+
+            // Delete user submission record
+            await this.userSubmissionRepo.delete({
+                userId: user.id,
+                submissionType: SubmissionType.DAILY_ACTION,
+                referenceId: Number(actionId),
+            });
 
             logger.info(`Daily action ${actionId} marked as incomplete by user ${user.id}`);
             return updatedAction;

@@ -1,8 +1,9 @@
 import { Response } from 'express';
 import { AdminManagementService } from '../services/AdminManagementService';
-import { StatusCodes } from 'http-status-codes';
 import { AdminRequest } from '../middlewares/admin.middleware';
 import { AdminRole } from '../models/Admin';
+import { sendSuccess, sendError, sendForbidden, sendNotFound } from '@/utils/apiResponse';
+import { StatusCodes } from 'http-status-codes';
 
 const adminManagementService = new AdminManagementService();
 
@@ -12,41 +13,32 @@ export class AdminManagementController {
             const { email, password, name, role } = req.body;
 
             if (!email || !password) {
-                return res.status(StatusCodes.BAD_REQUEST).json({
-                    message: 'Email and password are required'
-                });
+                return sendError(res, 'Email and password are required', 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
             }
 
             if (password.length < 6) {
-                return res.status(StatusCodes.BAD_REQUEST).json({
-                    message: 'Password must be at least 6 characters'
-                });
+                return sendError(res, 'Password must be at least 6 characters', 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
             }
 
             // Only master_admin can create another master_admin
             if (role === AdminRole.MASTER_ADMIN && req.admin!.role !== AdminRole.MASTER_ADMIN) {
-                return res.status(StatusCodes.FORBIDDEN).json({
-                    message: 'Only master admin can create another master admin'
-                });
+                return sendForbidden(res, 'Only master admin can create another master admin');
             }
 
             const admin = await adminManagementService.createAdmin({ email, password, name, role });
 
-            res.status(StatusCodes.CREATED).json({
-                message: 'Admin created successfully',
-                admin
-            });
+            sendSuccess(res, { admin }, 'Admin created successfully', StatusCodes.CREATED);
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 
     static async getAdmins(req: AdminRequest, res: Response) {
         try {
             const admins = await adminManagementService.getAdmins();
-            res.status(StatusCodes.OK).json({ admins });
+            sendSuccess(res, { admins }, 'Admins retrieved successfully');
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 
@@ -54,9 +46,9 @@ export class AdminManagementController {
         try {
             const { id } = req.params;
             const admin = await adminManagementService.getAdminById(id);
-            res.status(StatusCodes.OK).json({ admin });
+            sendSuccess(res, { admin }, 'Admin retrieved successfully');
         } catch (error: any) {
-            res.status(StatusCodes.NOT_FOUND).json({ message: error.message });
+            sendNotFound(res, error.message);
         }
     }
 
@@ -65,12 +57,9 @@ export class AdminManagementController {
             const { id } = req.params;
             const admin = await adminManagementService.lockAdmin(id, req.admin!.id);
 
-            res.status(StatusCodes.OK).json({
-                message: 'Admin locked successfully',
-                admin
-            });
+            sendSuccess(res, { admin }, 'Admin locked successfully');
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 
@@ -79,12 +68,9 @@ export class AdminManagementController {
             const { id } = req.params;
             const admin = await adminManagementService.unlockAdmin(id);
 
-            res.status(StatusCodes.OK).json({
-                message: 'Admin unlocked successfully',
-                admin
-            });
+            sendSuccess(res, { admin }, 'Admin unlocked successfully');
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 
@@ -94,25 +80,18 @@ export class AdminManagementController {
             const { newPassword } = req.body;
 
             if (!newPassword) {
-                return res.status(StatusCodes.BAD_REQUEST).json({
-                    message: 'New password is required'
-                });
+                return sendError(res, 'New password is required', 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
             }
 
             if (newPassword.length < 6) {
-                return res.status(StatusCodes.BAD_REQUEST).json({
-                    message: 'Password must be at least 6 characters'
-                });
+                return sendError(res, 'Password must be at least 6 characters', 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
             }
 
             const admin = await adminManagementService.resetAdminPassword(id, newPassword, req.admin!.id);
 
-            res.status(StatusCodes.OK).json({
-                message: 'Password reset successfully',
-                admin
-            });
+            sendSuccess(res, { admin }, 'Password reset successfully');
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 
@@ -121,11 +100,9 @@ export class AdminManagementController {
             const { id } = req.params;
             await adminManagementService.deleteAdmin(id, req.admin!.id);
 
-            res.status(StatusCodes.OK).json({
-                message: 'Admin deleted successfully'
-            });
+            sendSuccess(res, null, 'Admin deleted successfully');
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 }

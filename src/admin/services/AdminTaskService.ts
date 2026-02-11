@@ -1,11 +1,13 @@
 import AppDataSource from '../../data-source';
-import { AdminUserAssignment } from '../models/AdminUserAssignment';
-import { Milestone } from '../../models/Milestone';
-import { DailyAction } from '../../models/DailyAction';
-import { MilestoneStep } from '../../models/MilestoneStep';
-import { User } from '../../models/User';
-import { Profile } from '../../models/Profile';
+import { AdminUserAssignment } from '@/admin/models/AdminUserAssignment';
+import { Milestone } from '@/models/Milestone';
+import { DailyAction } from '@/models/DailyAction';
+import { MilestoneStep } from '@/models/MilestoneStep';
+import { Profile } from '@/models/Profile';
 import { In } from 'typeorm';
+import { MilestoneStatus } from '@/interfaces/milestone/MilestoneStatus';
+import { DailyActionStatus } from '@/interfaces/dailyAction/DailyActionStatus';
+import { UserSubmission } from '@/admin/models/UserSubmission';
 
 export interface TaskFilters {
     status?: string;
@@ -21,6 +23,7 @@ export class AdminTaskService {
     private dailyActionRepository = AppDataSource.getRepository(DailyAction);
     private milestoneStepRepository = AppDataSource.getRepository(MilestoneStep);
     private profileRepository = AppDataSource.getRepository(Profile);
+    private userSubmissionRepository = AppDataSource.getRepository(UserSubmission);
 
     /**
      * Get user IDs that are assigned to the admin
@@ -317,11 +320,11 @@ export class AdminTaskService {
 
         if (userIds.length === 0) {
             return {
-                assignedUsersCount: 0,
-                pendingMilestones: 0,
-                pendingDailyActions: 0,
-                completedMilestones: 0,
-                completedDailyActions: 0
+                pendingTasks: 0,
+                completedTasks: 0,
+                totalUsers: 0,
+                completionRate: 0,
+                todaySubmissions: 0,
             };
         }
 
@@ -329,36 +332,44 @@ export class AdminTaskService {
             pendingMilestones,
             pendingDailyActions,
             completedMilestones,
-            completedDailyActions
+            completedDailyActions,
+            todaySubmissions
         ] = await Promise.all([
             this.milestoneRepository
                 .createQueryBuilder('milestone')
                 .where('milestone.userId IN (:...userIds)', { userIds })
-                .andWhere('milestone.status = :status', { status: 'under-review' })
+                .andWhere('milestone.status = :status', { status: MilestoneStatus.UNDER_REVIEW })
                 .getCount(),
             this.dailyActionRepository
                 .createQueryBuilder('dailyAction')
                 .where('dailyAction.userId IN (:...userIds)', { userIds })
-                .andWhere('dailyAction.status = :status', { status: 1 })
+                .andWhere('dailyAction.status = :status', { status: DailyActionStatus.SUBMITTED })
                 .getCount(),
             this.milestoneRepository
                 .createQueryBuilder('milestone')
                 .where('milestone.userId IN (:...userIds)', { userIds })
-                .andWhere('milestone.status = :status', { status: 'completed' })
+                .andWhere('milestone.status = :status', { status: MilestoneStatus.COMPLETED })
                 .getCount(),
             this.dailyActionRepository
                 .createQueryBuilder('dailyAction')
                 .where('dailyAction.userId IN (:...userIds)', { userIds })
-                .andWhere('dailyAction.status = :status', { status: 2 })
+                .andWhere('dailyAction.status = :status', { status: DailyActionStatus.APPROVED })
+                .getCount(),
+            this.userSubmissionRepository
+                .createQueryBuilder('userSubmission')
+                .where('userSubmission.userId IN (:...userIds)', { userIds })
+                .andWhere('userSubmission.submittedAt >= :today', { today: new Date().toISOString().split('T')[0] })
                 .getCount()
         ]);
 
+        const totalTasks = pendingMilestones + pendingDailyActions + completedMilestones + completedDailyActions;
+
         return {
-            assignedUsersCount: userIds.length,
-            pendingMilestones,
-            pendingDailyActions,
-            completedMilestones,
-            completedDailyActions
-        };
+            pendingTasks: pendingMilestones + pendingDailyActions,
+            completedTasks: completedMilestones + completedDailyActions,
+            totalUsers: userIds.length,
+            completionRate: (completedMilestones + completedDailyActions) / (totalTasks || 1) * 100,
+            todaySubmissions: todaySubmissions,
+        }
     }
 }

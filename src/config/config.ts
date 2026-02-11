@@ -111,6 +111,7 @@ const config: IConfig = {
     REFRESH_EXPIRES_IN: process.env.JWT_ADMIN_REFRESH_EXPIRES_IN || '7d'
   },
 
+
   CORS: {
     ORIGIN: process.env.CORS_ORIGIN ?
       (process.env.CORS_ORIGIN.includes(',') ?

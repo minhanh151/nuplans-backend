@@ -76,7 +76,7 @@ class App {
     this.app.use('/api', apiRoutes);
 
     // Admin routes
-    this.app.use('/admin', adminRoutes);
+    this.app.use('/api/admin', adminRoutes);
 
     // Handle 404
     this.app.use((req: Request, res: Response) => {

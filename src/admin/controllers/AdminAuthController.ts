@@ -1,7 +1,9 @@
 import { Response } from 'express';
 import { AdminAuthService } from '../services/AdminAuthService';
-import { StatusCodes } from 'http-status-codes';
 import { AdminRequest } from '../middlewares/admin.middleware';
+import { sendSuccess, sendError, sendUnauthorized } from '@/utils/apiResponse';
+import { StatusCodes } from 'http-status-codes';
+import logger from '@/utils/logger';
 
 const adminAuthService = new AdminAuthService();
 
@@ -11,19 +13,15 @@ export class AdminAuthController {
             const { email, password } = req.body;
 
             if (!email || !password) {
-                return res.status(StatusCodes.BAD_REQUEST).json({
-                    message: 'Email and password are required'
-                });
+                return sendError(res, 'Email and password are required', 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
             }
 
             const result = await adminAuthService.login({ email, password });
 
-            res.status(StatusCodes.OK).json({
-                message: 'Login successful',
-                ...result
-            });
+            sendSuccess(res, result, 'Login successful');
         } catch (error: any) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ message: error.message });
+            logger.error("Login error: ", error);
+            sendUnauthorized(res, error.message);
         }
     }
 
@@ -32,16 +30,14 @@ export class AdminAuthController {
             const { refreshToken } = req.body;
 
             if (!refreshToken) {
-                return res.status(StatusCodes.BAD_REQUEST).json({
-                    message: 'Refresh token is required'
-                });
+                return sendError(res, 'Refresh token is required', 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
             }
 
             const { accessToken } = await adminAuthService.refreshAccessToken(refreshToken);
 
-            res.status(StatusCodes.OK).json({ accessToken });
+            sendSuccess(res, { accessToken }, 'Token refreshed successfully');
         } catch (error: any) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ message: error.message });
+            sendUnauthorized(res, error.message);
         }
     }
 
@@ -50,22 +46,18 @@ export class AdminAuthController {
             const { oldPassword, newPassword } = req.body;
 
             if (!oldPassword || !newPassword) {
-                return res.status(StatusCodes.BAD_REQUEST).json({
-                    message: 'Old password and new password are required'
-                });
+                return sendError(res, 'Old password and new password are required', 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
             }
 
             if (newPassword.length < 6) {
-                return res.status(StatusCodes.BAD_REQUEST).json({
-                    message: 'New password must be at least 6 characters'
-                });
+                return sendError(res, 'New password must be at least 6 characters', 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
             }
 
             await adminAuthService.changePassword(req.admin!.id, oldPassword, newPassword);
 
-            res.status(StatusCodes.OK).json({ message: 'Password changed successfully' });
+            sendSuccess(res, null, 'Password changed successfully');
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 
@@ -77,17 +69,17 @@ export class AdminAuthController {
                 await adminAuthService.logout(refreshToken);
             }
 
-            res.status(StatusCodes.OK).json({ message: 'Logged out successfully' });
+            sendSuccess(res, null, 'Logged out successfully');
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 
     static async me(req: AdminRequest, res: Response) {
         try {
-            res.status(StatusCodes.OK).json({ admin: req.admin });
+            sendSuccess(res, { admin: req.admin }, 'Admin profile retrieved');
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 }

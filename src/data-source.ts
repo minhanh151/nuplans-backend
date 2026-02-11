@@ -12,7 +12,9 @@ const AppDataSource = new DataSource({
     logging: config.DB.LOGGING,
     entities: [
         __dirname + '/models/*.ts',
-        __dirname + '/models/*.js'
+        __dirname + '/models/*.js',
+        __dirname + '/admin/models/*.ts',
+        __dirname + '/admin/models/*.js'
     ],
     migrations: [
         __dirname + '/database/migrations/*.ts',

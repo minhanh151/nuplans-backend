@@ -1,7 +1,8 @@
 import { Response } from 'express';
 import { AdminTaskService } from '../services/AdminTaskService';
-import { StatusCodes } from 'http-status-codes';
 import { AdminRequest } from '../middlewares/admin.middleware';
+import { sendSuccess, sendError, sendNotFound } from '@/utils/apiResponse';
+import { StatusCodes } from 'http-status-codes';
 
 const adminTaskService = new AdminTaskService();
 
@@ -20,9 +21,9 @@ export class AdminTaskController {
                 limit: limit ? parseInt(limit as string) : undefined
             });
 
-            res.status(StatusCodes.OK).json(result);
+            sendSuccess(res, result, 'Pending milestones retrieved successfully');
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 
@@ -39,9 +40,9 @@ export class AdminTaskController {
                 limit: limit ? parseInt(limit as string) : undefined
             });
 
-            res.status(StatusCodes.OK).json(result);
+            sendSuccess(res, result, 'Pending daily actions retrieved successfully');
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 
@@ -52,12 +53,12 @@ export class AdminTaskController {
         try {
             const { id } = req.params;
             const milestone = await adminTaskService.getMilestoneDetail(parseInt(id), req.admin!.id);
-            res.status(StatusCodes.OK).json({ milestone });
+            sendSuccess(res, { milestone }, 'Milestone detail retrieved successfully');
         } catch (error: any) {
             if (error.message === 'Milestone not found' || error.message.includes('Access denied')) {
-                return res.status(StatusCodes.NOT_FOUND).json({ message: error.message });
+                return sendNotFound(res, error.message);
             }
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 
@@ -68,12 +69,12 @@ export class AdminTaskController {
         try {
             const { id } = req.params;
             const action = await adminTaskService.getDailyActionDetail(parseInt(id), req.admin!.id);
-            res.status(StatusCodes.OK).json({ action });
+            sendSuccess(res, { action }, 'Daily action detail retrieved successfully');
         } catch (error: any) {
             if (error.message === 'Daily action not found' || error.message.includes('Access denied')) {
-                return res.status(StatusCodes.NOT_FOUND).json({ message: error.message });
+                return sendNotFound(res, error.message);
             }
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 
@@ -85,12 +86,9 @@ export class AdminTaskController {
             const { id } = req.params;
             const milestone = await adminTaskService.approveMilestone(parseInt(id), req.admin!.id);
 
-            res.status(StatusCodes.OK).json({
-                message: 'Milestone approved successfully',
-                milestone
-            });
+            sendSuccess(res, { milestone }, 'Milestone approved successfully');
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 
@@ -103,12 +101,9 @@ export class AdminTaskController {
             const { reason } = req.body;
             const milestone = await adminTaskService.rejectMilestone(parseInt(id), req.admin!.id, reason);
 
-            res.status(StatusCodes.OK).json({
-                message: 'Milestone rejected',
-                milestone
-            });
+            sendSuccess(res, { milestone }, 'Milestone rejected');
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 
@@ -120,12 +115,9 @@ export class AdminTaskController {
             const { id } = req.params;
             const action = await adminTaskService.approveDailyAction(parseInt(id), req.admin!.id);
 
-            res.status(StatusCodes.OK).json({
-                message: 'Daily action approved successfully',
-                action
-            });
+            sendSuccess(res, { action }, 'Daily action approved successfully');
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 
@@ -138,12 +130,9 @@ export class AdminTaskController {
             const { reason } = req.body;
             const action = await adminTaskService.rejectDailyAction(parseInt(id), req.admin!.id, reason);
 
-            res.status(StatusCodes.OK).json({
-                message: 'Daily action rejected',
-                action
-            });
+            sendSuccess(res, { action }, 'Daily action rejected');
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 }

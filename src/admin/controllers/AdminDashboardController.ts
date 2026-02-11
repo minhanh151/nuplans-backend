@@ -1,7 +1,8 @@
 import { Response } from 'express';
 import { AdminTaskService } from '../services/AdminTaskService';
-import { StatusCodes } from 'http-status-codes';
 import { AdminRequest } from '../middlewares/admin.middleware';
+import { sendSuccess, sendError } from '@/utils/apiResponse';
+import { StatusCodes } from 'http-status-codes';
 
 const adminTaskService = new AdminTaskService();
 
@@ -12,9 +13,9 @@ export class AdminDashboardController {
     static async getStats(req: AdminRequest, res: Response) {
         try {
             const stats = await adminTaskService.getDashboardStats(req.admin!.id);
-            res.status(StatusCodes.OK).json({ stats });
+            sendSuccess(res, stats, 'Dashboard stats retrieved successfully');
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 }

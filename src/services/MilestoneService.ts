@@ -6,10 +6,12 @@ import { LessThanOrEqual } from "typeorm";
 import logger from "@/utils/logger";
 import { MilestoneDetail } from "@/interfaces/MilestoneDetail";
 import { MilestoneStatus } from "@/interfaces/milestone/MilestoneStatus";
+import { UserSubmission, SubmissionType, SubmissionStatus } from "@/admin/models/UserSubmission";
 
 export class MilestoneService {
     private milestoneRepo = AppDataSource.getRepository(Milestone);
     private milestoneStepRepo = AppDataSource.getRepository(MilestoneStep);
+    private userSubmissionRepo = AppDataSource.getRepository(UserSubmission);
 
     /**
      * Get milestones for a user with optional filters
@@ -234,6 +236,16 @@ export class MilestoneService {
             milestone.status = MilestoneStatus.UNDER_REVIEW;
 
             await this.milestoneRepo.save(milestone);
+
+            // Create user submission record
+            const submission = this.userSubmissionRepo.create({
+                userId: user.id,
+                submissionType: SubmissionType.MILESTONE,
+                referenceId: milestoneId,
+                evidencePath: fileUrl,
+                status: SubmissionStatus.SUBMITTED,
+            });
+            await this.userSubmissionRepo.save(submission);
 
             logger.info(`Milestone ${milestoneId} submitted for review by user ${user.id}`);
             return { success: true };

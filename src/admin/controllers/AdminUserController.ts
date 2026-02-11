@@ -1,8 +1,9 @@
 import { Response } from 'express';
 import { AdminUserService } from '../services/AdminUserService';
-import { StatusCodes } from 'http-status-codes';
 import { AdminRequest } from '../middlewares/admin.middleware';
 import { AdminRole } from '../models/Admin';
+import { sendSuccess, sendError, sendForbidden } from '@/utils/apiResponse';
+import { StatusCodes } from 'http-status-codes';
 
 const adminUserService = new AdminUserService();
 
@@ -13,9 +14,9 @@ export class AdminUserController {
     static async getAssignedUsers(req: AdminRequest, res: Response) {
         try {
             const users = await adminUserService.getAssignedUsers(req.admin!.id);
-            res.status(StatusCodes.OK).json({ users });
+            sendSuccess(res, { users }, 'Assigned users retrieved successfully');
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 
@@ -25,9 +26,9 @@ export class AdminUserController {
     static async getAllUsers(req: AdminRequest, res: Response) {
         try {
             const users = await adminUserService.getAllUsers();
-            res.status(StatusCodes.OK).json({ users });
+            sendSuccess(res, { users }, 'All users retrieved successfully');
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 
@@ -44,19 +45,14 @@ export class AdminUserController {
 
             // Only master admin can assign users to other admins
             if (adminId && adminId !== req.admin!.id && req.admin!.role !== AdminRole.MASTER_ADMIN) {
-                return res.status(StatusCodes.FORBIDDEN).json({
-                    message: 'Only master admin can assign users to other admins'
-                });
+                return sendForbidden(res, 'Only master admin can assign users to other admins');
             }
 
             const assignment = await adminUserService.assignUserToAdmin(targetAdminId, userId);
 
-            res.status(StatusCodes.CREATED).json({
-                message: 'User assigned successfully',
-                assignment
-            });
+            sendSuccess(res, { assignment }, 'User assigned successfully', StatusCodes.CREATED);
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 
@@ -73,18 +69,14 @@ export class AdminUserController {
 
             // Only master admin can unassign users from other admins
             if (adminId && adminId !== req.admin!.id && req.admin!.role !== AdminRole.MASTER_ADMIN) {
-                return res.status(StatusCodes.FORBIDDEN).json({
-                    message: 'Only master admin can unassign users from other admins'
-                });
+                return sendForbidden(res, 'Only master admin can unassign users from other admins');
             }
 
             await adminUserService.unassignUserFromAdmin(targetAdminId, userId);
 
-            res.status(StatusCodes.OK).json({
-                message: 'User unassigned successfully'
-            });
+            sendSuccess(res, null, 'User unassigned successfully');
         } catch (error: any) {
-            res.status(StatusCodes.BAD_REQUEST).json({ message: error.message });
+            sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
     }
 }
