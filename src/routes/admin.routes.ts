@@ -5,6 +5,7 @@ import { AdminManagementController } from "../admin/controllers/AdminManagementC
 import { AdminUserController } from "../admin/controllers/AdminUserController";
 import { AdminTaskController } from "../admin/controllers/AdminTaskController";
 import { AdminDashboardController } from "../admin/controllers/AdminDashboardController";
+import { AdminAtRiskController } from "../admin/controllers/AdminAtRiskController";
 
 const router = Router();
 
@@ -25,6 +26,9 @@ router.get("/auth/me", authenticateAdmin, (req, res) => AdminAuthController.me(r
 
 // Dashboard
 router.get("/dashboard", authenticateAdmin, (req, res) => AdminDashboardController.getStats(req, res));
+
+// At-Risk Users
+router.get("/dashboard/users-at-risk", authenticateAdmin, (req, res) => AdminAtRiskController.getAtRiskUsers(req, res));
 
 // ==========================================
 // Admin Management (Master Admin Only)
@@ -62,3 +66,4 @@ router.post("/tasks/daily-actions/:id/approve", authenticateAdmin, (req, res) =>
 router.post("/tasks/daily-actions/:id/reject", authenticateAdmin, (req, res) => AdminTaskController.rejectDailyAction(req, res));
 
 export default router;
+

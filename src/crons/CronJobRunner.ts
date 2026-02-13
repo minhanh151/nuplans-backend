@@ -14,6 +14,7 @@ import { GenerateMilestoneStepService } from "@/services/GenerateMilestoneStepSe
 import { GenerateWeeklyPlanService } from "@/services/GenerateWeeklyPlanService";
 import { GenerateAllPlanService } from "@/services/GenerateAllPlanService";
 import { IdentityService } from "@/services/IdentityService";
+import { UserAtRiskService } from "@/services/UserAtRiskService";
 
 export class CronJobRunner {
     private static instance: CronJobRunner;
@@ -111,7 +112,7 @@ export class CronJobRunner {
         });
 
         // Schedule daily actions generation
-        cron.schedule("10 22 * * *", async () => {
+        cron.schedule("10 0 * * *", async () => {
             const traceId = randomUUID();
             await runWithContext({ traceId }, async () => {
                 GenerateDailyActionService.getInstance().genDailyActions();
@@ -123,6 +124,14 @@ export class CronJobRunner {
             const traceId = randomUUID();
             await runWithContext({ traceId }, async () => {
                 IdentityService.getInstance().verifyIdentityProcess();
+            });
+        });
+
+        cron.schedule("20 * * * *", async () => {
+            const traceId = randomUUID();
+            await runWithContext({ traceId }, async () => {
+                logger.info("Running daily user-at-risk computation...");
+                await UserAtRiskService.getInstance().computeAndSync();
             });
         });
 

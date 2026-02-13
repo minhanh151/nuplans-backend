@@ -460,3 +460,9 @@ ALTER TABLE public.daily_actions
 ADD COLUMN IF NOT EXISTS status SMALLINT NOT NULL DEFAULT 0,
 ADD COLUMN IF NOT EXISTS evidence_path TEXT,
 ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;
+
+
+
+alter table public.profiles
+add column if not exists milestone_overdue_count int default 0,
+add column if not exists last_activity TIMESTAMPTZ default now();
