@@ -14,7 +14,7 @@ export class AdminUserController {
     static async getAssignedUsers(req: AdminRequest, res: Response) {
         try {
             const users = await adminUserService.getAssignedUsers(req.admin!.id);
-            sendSuccess(res, { users }, 'Assigned users retrieved successfully');
+            sendSuccess(res, [...users], 'Assigned users retrieved successfully');
         } catch (error: any) {
             sendError(res, error.message, 'BAD_REQUEST', StatusCodes.BAD_REQUEST);
         }
